@@ -111,7 +111,7 @@ int cw_pack_context_init (cw_pack_context* pack_context, void* data, unsigned lo
 #define cw_store32(x)  *(uint32_t*)pack_context->current = *(uint32_t*)&x; pack_context->current += 4
 #define cw_store64(x)  *(uint64_t*)pack_context->current = *(uint64_t*)&x; pack_context->current += 8
 
-#else	/* Byte order little endian or undetermined */
+#else    /* Byte order little endian or undetermined */
 
 #define cw_store16(d)                                   \
     *(pack_context->current)++ = (uint8_t)(d >> 8);     \
@@ -119,44 +119,44 @@ int cw_pack_context_init (cw_pack_context* pack_context, void* data, unsigned lo
 
 #ifdef COMPILE_FOR_LITTLE_ENDIAN
 
-#define cw_store32(x)									\
-	*(uint32_t*)pack_context->current =                 \
-	((uint32_t)((((uint32_t)(x)) >> 24) |				\
-	(((uint32_t)(x) & 0x00ff0000) >>  8) |				\
-	(((uint32_t)(x) & 0x0000ff00) <<  8) |				\
-	(((uint32_t)(x)) << 24)));                          \
+#define cw_store32(x)                                   \
+    *(uint32_t*)pack_context->current =                 \
+    ((uint32_t)((((uint32_t)(x)) >> 24) |               \
+    (((uint32_t)(x) & 0x00ff0000) >>  8) |              \
+    (((uint32_t)(x) & 0x0000ff00) <<  8) |              \
+    (((uint32_t)(x)) << 24)));                          \
     pack_context->current += 4;
 
-#define cw_store64(x)									\
-	*(uint64_t*)pack_context->current =                 \
-	((uint64_t)(										\
-	(((((uint64_t)(x)) >> 40) |							\
-	(((uint64_t)(x)) << 24)) & 0x0000ff000000ff00ULL) | \
-	(((((uint64_t)(x)) >> 24) |							\
-	(((uint64_t)(x)) << 40)) & 0x00ff000000ff0000ULL) | \
-	(((uint64_t)(x) & 0x000000ff00000000ULL) >>  8) |	\
-	(((uint64_t)(x) & 0x00000000ff000000ULL) <<  8) |	\
-	(((uint64_t)(x)) >> 56) |							\
+#define cw_store64(x)                                   \
+    *(uint64_t*)pack_context->current =                 \
+    ((uint64_t)(                                        \
+    (((((uint64_t)(x)) >> 40) |                         \
+    (((uint64_t)(x)) << 24)) & 0x0000ff000000ff00ULL) | \
+    (((((uint64_t)(x)) >> 24) |                         \
+    (((uint64_t)(x)) << 40)) & 0x00ff000000ff0000ULL) | \
+    (((uint64_t)(x) & 0x000000ff00000000ULL) >>  8) |   \
+    (((uint64_t)(x) & 0x00000000ff000000ULL) <<  8) |   \
+    (((uint64_t)(x)) >> 56) |                           \
     (((uint64_t)(x)) << 56)));                          \
     pack_context->current += 8;
 
 #else   /* Byte order undetermined */
 
 #define cw_store32(d)                                   \
-	*(pack_context->current)++ = (uint8_t)(d >> 24);    \
-	*(pack_context->current)++ = (uint8_t)(d >> 16);    \
-	*(pack_context->current)++ = (uint8_t)(d >> 8);     \
-	*(pack_context->current)++ = (uint8_t)d;
+    *(pack_context->current)++ = (uint8_t)(d >> 24);    \
+    *(pack_context->current)++ = (uint8_t)(d >> 16);    \
+    *(pack_context->current)++ = (uint8_t)(d >> 8);     \
+    *(pack_context->current)++ = (uint8_t)d;
 
 #define cw_store64(z)                                   \
-	*(pack_context->current)++ = (uint8_t)(z >> 56);    \
-	*(pack_context->current)++ = (uint8_t)(z >> 48);    \
-	*(pack_context->current)++ = (uint8_t)(z >> 40);    \
-	*(pack_context->current)++ = (uint8_t)(z >> 32);    \
-	*(pack_context->current)++ = (uint8_t)(z >> 24);    \
-	*(pack_context->current)++ = (uint8_t)(z >> 16);    \
-	*(pack_context->current)++ = (uint8_t)(z >> 8);     \
-	*(pack_context->current)++ = (uint8_t)z;
+    *(pack_context->current)++ = (uint8_t)(z >> 56);    \
+    *(pack_context->current)++ = (uint8_t)(z >> 48);    \
+    *(pack_context->current)++ = (uint8_t)(z >> 40);    \
+    *(pack_context->current)++ = (uint8_t)(z >> 32);    \
+    *(pack_context->current)++ = (uint8_t)(z >> 24);    \
+    *(pack_context->current)++ = (uint8_t)(z >> 16);    \
+    *(pack_context->current)++ = (uint8_t)(z >> 8);     \
+    *(pack_context->current)++ = (uint8_t)z;
 #endif
 #endif
 
@@ -178,43 +178,43 @@ int cw_pack_context_init (cw_pack_context* pack_context, void* data, unsigned lo
         }
 
 
-#define tryMove0(t)										\
-{														\
+#define tryMove0(t)                                     \
+{                                                       \
     cw_pack_reserve_space(1)                            \
-	*pack_context->current++ = (uint8_t)(t);			\
-	return CWP_RC_OK;									\
+    *pack_context->current++ = (uint8_t)(t);            \
+    return CWP_RC_OK;                                   \
 }
 
-#define tryMove1(t,d)									\
-{														\
+#define tryMove1(t,d)                                   \
+{                                                       \
     cw_pack_reserve_space(2)                            \
-	*pack_context->current++ = (uint8_t)t;				\
-	*pack_context->current++ = (uint8_t)d;				\
-	return CWP_RC_OK;									\
+    *pack_context->current++ = (uint8_t)t;              \
+    *pack_context->current++ = (uint8_t)d;              \
+    return CWP_RC_OK;                                   \
 }
 
-#define tryMove2(t,d)									\
-{														\
+#define tryMove2(t,d)                                   \
+{                                                       \
     cw_pack_reserve_space(3)                            \
-	*pack_context->current++ = (uint8_t)t;				\
-	cw_store16(d);									    \
-	return CWP_RC_OK;									\
+    *pack_context->current++ = (uint8_t)t;              \
+    cw_store16(d);                                      \
+    return CWP_RC_OK;                                   \
 }
 
-#define tryMove4(t,d)									\
-{														\
+#define tryMove4(t,d)                                   \
+{                                                       \
     cw_pack_reserve_space(5)                            \
-	*pack_context->current++ = (uint8_t)t;				\
-	cw_store32(d);										\
-	return CWP_RC_OK;									\
+    *pack_context->current++ = (uint8_t)t;              \
+    cw_store32(d);                                      \
+    return CWP_RC_OK;                                   \
 }
 
-#define tryMove8(t,d)									\
-{														\
+#define tryMove8(t,d)                                   \
+{                                                       \
     cw_pack_reserve_space(9)                            \
-	*pack_context->current++ = (uint8_t)t;				\
-	cw_store64(d);										\
-	return CWP_RC_OK;									\
+    *pack_context->current++ = (uint8_t)t;              \
+    cw_store64(d);                                      \
+    return CWP_RC_OK;                                   \
 }
 
 
@@ -223,8 +223,8 @@ int cw_pack_unsigned(cw_pack_context* pack_context, uint64_t i)
     if (pack_context->return_code)
         return CWP_RC_STOPPED;
     
-	if (i < 128)
-		tryMove0(i);
+    if (i < 128)
+        tryMove0(i);
 
     if (i < 256)
         tryMove1(0xcc, i);
@@ -247,8 +247,8 @@ int cw_pack_signed(cw_pack_context* pack_context, int64_t i)
     if (i >= 0)
         return cw_pack_unsigned(pack_context, (uint64_t)i);
     
-	if (i >= -32)
-		tryMove0(i);
+    if (i >= -32)
+        tryMove0(i);
 
     if (i >= -128)
         tryMove1(0xd0, i);
@@ -268,8 +268,8 @@ int cw_pack_float(cw_pack_context* pack_context, float f)
     if (pack_context->return_code)
         return CWP_RC_STOPPED;
     
-	uint32_t tmp = *((uint32_t*)&f);
-	tryMove4(0xca,tmp);
+    uint32_t tmp = *((uint32_t*)&f);
+    tryMove4(0xca,tmp);
 }
 
 
@@ -278,8 +278,8 @@ int cw_pack_double(cw_pack_context* pack_context, double d)
     if (pack_context->return_code)
         return CWP_RC_STOPPED;
     
-	uint64_t tmp = *((uint64_t*)&d);
-	tryMove8(0xcb,tmp);
+    uint64_t tmp = *((uint64_t*)&d);
+    tryMove8(0xcb,tmp);
 }
 
 
@@ -288,7 +288,7 @@ int cw_pack_nil(cw_pack_context* pack_context)
     if (pack_context->return_code)
         return CWP_RC_STOPPED;
     
-	tryMove0(0xc0);
+    tryMove0(0xc0);
 }
 
 
@@ -297,7 +297,7 @@ int cw_pack_boolean(cw_pack_context* pack_context, bool b)
     if (pack_context->return_code)
         return CWP_RC_STOPPED;
     
-	tryMove0(b? 0xc3: 0xc2);
+    tryMove0(b? 0xc3: 0xc2);
 }
 
 
@@ -306,11 +306,11 @@ int cw_pack_array_size(cw_pack_context* pack_context, uint32_t n)
     if (pack_context->return_code)
         return CWP_RC_STOPPED;
     
-	if (n < 16)
-		tryMove0(0x90 | n);
+    if (n < 16)
+        tryMove0(0x90 | n);
 
     if (n < 65536)
-		tryMove2(0xdc, n);
+        tryMove2(0xdc, n);
 
     tryMove4(0xdd, n);
 }
@@ -321,11 +321,11 @@ int cw_pack_map_size(cw_pack_context* pack_context, uint32_t n)
     if (pack_context->return_code)
         return CWP_RC_STOPPED;
     
-	if (n < 16)
-		tryMove0(0x80 | n);
+    if (n < 16)
+        tryMove0(0x80 | n);
 
     if (n < 65536)
-		tryMove2(0xde, n);
+        tryMove2(0xde, n);
 
     tryMove4(0xdf, n);
 }
@@ -477,7 +477,7 @@ int cw_unpack_context_init (cw_unpack_context* unpack_context, void* data, unsig
 #define cw_load32  tmpu32 = *(uint32_t*)unpack_context->current; unpack_context->current += 4
 #define cw_load64(z)  unpack_context->item.as.u64 = *(uint64_t*)unpack_context->current; unpack_context->current += 4
 
-#else	/* Byte order little endian or undetermined */
+#else    /* Byte order little endian or undetermined */
 
 #define cw_load16                                               \
     tmpu16 = (uint16_t)((*unpack_context->current++) << 8);     \
@@ -613,20 +613,20 @@ int cw_unpack_next (cw_unpack_context* unpack_context)
         case 0x68: case 0x69: case 0x6a: case 0x6b: case 0x6c: case 0x6d: case 0x6e: case 0x6f:
         case 0x70: case 0x71: case 0x72: case 0x73: case 0x74: case 0x75: case 0x76: case 0x77:
         case 0x78: case 0x79: case 0x7a: case 0x7b: case 0x7c: case 0x7d: case 0x7e: case 0x7f:
-                    getDDItem(CWP_ITEM_POSITIVE_INTEGER, i64, c);		break;  // positive fixnum
+                    getDDItem(CWP_ITEM_POSITIVE_INTEGER, i64, c);       break;  // positive fixnum
         case 0x80: case 0x81: case 0x82: case 0x83: case 0x84: case 0x85: case 0x86: case 0x87:
         case 0x88: case 0x89: case 0x8a: case 0x8b: case 0x8c: case 0x8d: case 0x8e: case 0x8f:
-                    getDDItem(CWP_ITEM_MAP, map.size, c & 0x0f);		break;  // fixmap
+                    getDDItem(CWP_ITEM_MAP, map.size, c & 0x0f);        break;  // fixmap
         case 0x90: case 0x91: case 0x92: case 0x93: case 0x94: case 0x95: case 0x96: case 0x97:
         case 0x98: case 0x99: case 0x9a: case 0x9b: case 0x9c: case 0x9d: case 0x9e: case 0x9f:
-                    getDDItem(CWP_ITEM_ARRAY, array.size, c & 0x0f);	break;	// fixarray
+                    getDDItem(CWP_ITEM_ARRAY, array.size, c & 0x0f);    break;  // fixarray
         case 0xa0: case 0xa1: case 0xa2: case 0xa3: case 0xa4: case 0xa5: case 0xa6: case 0xa7:
         case 0xa8: case 0xa9: case 0xaa: case 0xab: case 0xac: case 0xad: case 0xae: case 0xaf:
         case 0xb0: case 0xb1: case 0xb2: case 0xb3: case 0xb4: case 0xb5: case 0xb6: case 0xb7:
         case 0xb8: case 0xb9: case 0xba: case 0xbb: case 0xbc: case 0xbd: case 0xbe: case 0xbf:
                     getDDItem(CWP_ITEM_STR, str.length, c & 0x1f);              // fixraw
                     cw_unpack_assert_blob(str);
-        case 0xc0:  unpack_context->item.type = CWP_ITEM_NIL;			break;	// nil
+        case 0xc0:  unpack_context->item.type = CWP_ITEM_NIL;           break;  // nil
         case 0xc2:  getDDItem(CWP_ITEM_BOOLEAN, boolean, false);        break;  // false
         case 0xc3:  getDDItem(CWP_ITEM_BOOLEAN, boolean, true);         break;  // true
         case 0xc4:  getDDItem1(CWP_ITEM_BIN, bin.length, uint8_t);              // bin 8
@@ -650,13 +650,13 @@ int cw_unpack_next (cw_unpack_context* unpack_context)
         case 0xca:  unpack_context->item.type = CWP_ITEM_FLOAT;                 // float
                     cw_unpack_assert_space(4);
                     cw_load32;
-                    unpack_context->item.as.real = *(float*)&tmpu32;					break;
-        case 0xcb:  getDDItem8(CWP_ITEM_DOUBLE);						break;	// double
-        case 0xcc:  getDDItem1(CWP_ITEM_POSITIVE_INTEGER, u64, uint8_t); break;	// unsigned int  8
+                    unpack_context->item.as.real = *(float*)&tmpu32;     break;
+        case 0xcb:  getDDItem8(CWP_ITEM_DOUBLE);                         break;  // double
+        case 0xcc:  getDDItem1(CWP_ITEM_POSITIVE_INTEGER, u64, uint8_t); break;  // unsigned int  8
         case 0xcd:  getDDItem2(CWP_ITEM_POSITIVE_INTEGER, u64, uint16_t); break; // unsigned int 16
         case 0xce:  getDDItem4(CWP_ITEM_POSITIVE_INTEGER, u64, uint32_t); break; // unsigned int 32
-        case 0xcf:  getDDItem8(CWP_ITEM_POSITIVE_INTEGER);				break;	// unsigned int 64
-        case 0xd0:  getDDItem1(CWP_ITEM_NEGATIVE_INTEGER, i64, int8_t);         // signed int  8
+        case 0xcf:  getDDItem8(CWP_ITEM_POSITIVE_INTEGER);               break;  // unsigned int 64
+        case 0xd0:  getDDItem1(CWP_ITEM_NEGATIVE_INTEGER, i64, int8_t);          // signed int  8
                     if (unpack_context->item.as.i64 >= 0)
                         unpack_context->item.type = CWP_ITEM_POSITIVE_INTEGER;
                     break;
@@ -745,42 +745,42 @@ int cw_skip_items (cw_unpack_context* unpack_context, long item_count)
             case 0xf8: case 0xf9: case 0xfa: case 0xfb: case 0xfc: case 0xfd: case 0xfe: case 0xff:
                                                                 // signed fixint
             case 0xc0:                                          // nil
-            case 0xc2:			                                // false
-            case 0xc3:	break;                                  // true
-            case 0xcc:											// unsigned int  8
-            case 0xd0:	cw_skip_bytes(1);						// signed int  8
-            case 0xcd:											// unsigned int 16
-            case 0xd1:											// signed int 16
-            case 0xd4:	cw_skip_bytes(2);						// fixext 1
-            case 0xd5:	cw_skip_bytes(3);						// fixext 2
-            case 0xca:											// float
-            case 0xce:											// unsigned int 32
-            case 0xd2:	cw_skip_bytes(4);						// signed int 32
-            case 0xd6:	cw_skip_bytes(5);						// fixext 4
-            case 0xcb:											// double
-            case 0xcf:											// unsigned int 64
-            case 0xd3:	cw_skip_bytes(8);						// signed int 64
-            case 0xd7:	cw_skip_bytes(9);						// fixext 8
-            case 0xd8:	cw_skip_bytes(17);						// fixext 16
+            case 0xc2:                                          // false
+            case 0xc3:  break;                                  // true
+            case 0xcc:                                          // unsigned int  8
+            case 0xd0:	cw_skip_bytes(1);                       // signed int  8
+            case 0xcd:                                          // unsigned int 16
+            case 0xd1:                                          // signed int 16
+            case 0xd4:  cw_skip_bytes(2);                       // fixext 1
+            case 0xd5:  cw_skip_bytes(3);                       // fixext 2
+            case 0xca:                                          // float
+            case 0xce:                                          // unsigned int 32
+            case 0xd2:  cw_skip_bytes(4);                       // signed int 32
+            case 0xd6:  cw_skip_bytes(5);                       // fixext 4
+            case 0xcb:                                          // double
+            case 0xcf:                                          // unsigned int 64
+            case 0xd3:  cw_skip_bytes(8);                       // signed int 64
+            case 0xd7:  cw_skip_bytes(9);                       // fixext 8
+            case 0xd8:  cw_skip_bytes(17);                      // fixext 16
             case 0xa0: case 0xa1: case 0xa2: case 0xa3: case 0xa4: case 0xa5: case 0xa6: case 0xa7:
             case 0xa8: case 0xa9: case 0xaa: case 0xab: case 0xac: case 0xad: case 0xae: case 0xaf:
             case 0xb0: case 0xb1: case 0xb2: case 0xb3: case 0xb4: case 0xb5: case 0xb6: case 0xb7:
             case 0xb8: case 0xb9: case 0xba: case 0xbb: case 0xbc: case 0xbd: case 0xbe: case 0xbf:
                 cw_skip_bytes(c & 0x1f);                        // fixstr
-            case 0xd9:											// str 8
-            case 0xc4:											// bin 8
+            case 0xd9:                                          // str 8
+            case 0xc4:                                          // bin 8
                 cw_unpack_assert_space(1);
                 tmpu32 = *unpack_context->current++;
                 cw_skip_bytes(tmpu32);
                 
-            case 0xda:											// str 16
-            case 0xc5:											// bin 16
+            case 0xda:                                          // str 16
+            case 0xc5:                                          // bin 16
                 cw_unpack_assert_space(2);
                 cw_load16;
                 cw_skip_bytes(tmpu16);
                 
-            case 0xdb:											// str 32
-            case 0xc6:											// bin 32
+            case 0xdb:                                          // str 32
+            case 0xc6:                                          // bin 32
                 cw_unpack_assert_space(4);
                 cw_load32;
                 cw_skip_bytes(tmpu32);
@@ -795,41 +795,41 @@ int cw_skip_items (cw_unpack_context* unpack_context, long item_count)
                 item_count += c & 15;                           // FixArray
                 break;
                 
-            case 0xdc:											// array 16
+            case 0xdc:                                          // array 16
                 cw_unpack_assert_space(2);
                 cw_load16;
                 item_count += tmpu16;
                 break;
                 
-            case 0xde:											// map 16
+            case 0xde:                                          // map 16
                 cw_unpack_assert_space(2);
                 cw_load16;
                 item_count += 2*tmpu16;
                 break;
                 
-            case 0xdd:											// array 32
+            case 0xdd:                                          // array 32
                 cw_unpack_assert_space(4);
                 cw_load32;
                 item_count += tmpu32;
                 break;
                 
-            case 0xdf:											// map 32
+            case 0xdf:                                          // map 32
                 cw_unpack_assert_space(4);
                 cw_load32;
                 item_count += 2*tmpu32;
                 break;
                 
-            case 0xc7:											// ext 8
+            case 0xc7:                                          // ext 8
                 cw_unpack_assert_space(1);
                 tmpu32 = *unpack_context->current++;
                 cw_skip_bytes(tmpu32 +1);
                 
-            case 0xc8:											// ext 16
+            case 0xc8:                                          // ext 16
                 cw_unpack_assert_space(2);
                 cw_load16;
                 cw_skip_bytes(tmpu16 +1);
                 
-            case 0xc9:											// ext 32
+            case 0xc9:                                          // ext 32
                 cw_unpack_assert_space(4);
                 cw_load32;
                 cw_skip_bytes(tmpu32 +1);

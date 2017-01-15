@@ -282,16 +282,16 @@ int main(int argc, const char * argv[])
     char inputbuf[30];
     
     
-#define TESTUP(buffer,etype)                                                \
-{                                                                           \
-    unsigned long len = strlen(buffer)/2;                                            \
-    for (ui = 0; ui < len; ui++)                                               \
+#define TESTUP(buffer,etype)                                                            \
+{                                                                                       \
+    unsigned long len = strlen(buffer)/2;                                               \
+    for (ui = 0; ui < len; ui++)                                                        \
     inputbuf[ui] = (uint8_t)(char2hex(buffer[2*ui])<<4) + char2hex(buffer[2*ui +1]);    \
-    cw_unpack_context_init (&testinbuf, inputbuf, len+blob_length, 0);   \
-    if ((i = cw_unpack_next(&testinbuf)))                                   \
-        ERROR1("In unpack_next, rc = ",i);                                  \
-    if (testinbuf.item.type != CWP_ITEM_##etype)                            \
-    ERROR("In unpack, type error");                                         \
+    cw_unpack_context_init (&testinbuf, inputbuf, len+blob_length, 0);                  \
+    if ((i = cw_unpack_next(&testinbuf)))                                               \
+        ERROR1("In unpack_next, rc = ",i);                                              \
+    if (testinbuf.item.type != CWP_ITEM_##etype)                                        \
+    ERROR("In unpack, type error");                                                     \
 }
     
 #define TESTUP_VAL(buffer,etype,var,val)                    \
