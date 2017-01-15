@@ -1,0 +1,13 @@
+{
+	"a": 3,
+	"b": -30714,
+	"special": [
+		true,
+		false,
+		null
+	],
+	"long string": "an even longer string to trigger handler, in an attempt to test if it's functioning OK",
+	"pi": 3.14,
+	"l": 6.1e-28,
+	"k": 1.23456789012345e-17
+}
