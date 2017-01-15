@@ -70,7 +70,7 @@ with the stopped error code.
 ## Build
 
 CWPack consists of a single src file with corresponding header file. It is written 
-in C and the files are together ~ 950 lines. No build is neccesary, just include the 
+in C and the files are together ~ 1K lines. No build is neccesary, just include the 
 files in your own build.
 
 CWPack has no dependencies to other libraries.
