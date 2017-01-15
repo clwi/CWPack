@@ -64,8 +64,8 @@ void example (void)
 
 CWPack does not check for illegal values (e.g. in STRs for illegal unicode characters).
 
-When an error is detected in a context, that context is return_code and all calls are returned 
-with the return_code error code.
+When an error is detected in a context, that context is stopped and all calls are returned 
+with the stopped error code.
 
 ## Build
 
