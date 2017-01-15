@@ -96,7 +96,6 @@ int cw_pack_context_init (cw_pack_context* pack_context, void* data, unsigned lo
         return pack_context->return_code;
     pack_context->start = pack_context->current = (uint8_t*)data;
     pack_context->end = pack_context->start + length;
-    pack_context->return_code = 0;
     pack_context->errno = 0;
     pack_context->handle_pack_overflow = hpo;
     return CWP_RC_OK;
@@ -464,7 +463,6 @@ int cw_unpack_context_init (cw_unpack_context* unpack_context, void* data, unsig
         return unpack_context->return_code;
     unpack_context->start = unpack_context->current = (uint8_t*)data;
     unpack_context->end = unpack_context->start + len;
-    unpack_context->return_code = 0;
     unpack_context->errno = 0;
     unpack_context->handle_unpack_underflow = huu;
     return CWP_RC_OK;
