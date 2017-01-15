@@ -37,13 +37,34 @@
  * Define COMPILE_FOR_BIG_ENDIAN or COMPILE_FOR_LITTLE_ENDIAN if you know.
  */
 
-/* Maybe other stuff here */
 
+#if defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && defined(__ORDER_BIG_ENDIAN__)
 
-
-#if defined(__i386__) || defined(__x86_64__)
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+#define COMPILE_FOR_BIG_ENDIAN
+#elif __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
 #define COMPILE_FOR_LITTLE_ENDIAN
 #endif
+
+#elif defined(__BYTE_ORDER) && defined(__LITTLE_ENDIAN) && defined(__BIG_ENDIAN)
+
+#if __BYTE_ORDER == __BIG_ENDIAN
+#define COMPILE_FOR_BIG_ENDIAN
+#elif __BYTE_ORDER == __LITTLE_ENDIAN
+#define COMPILE_FOR_LITTLE_ENDIAN
+#endif
+
+#elif defined(__BIG_ENDIAN__)
+#define COMPILE_FOR_BIG_ENDIAN
+
+#elif defined(__LITTLE_ENDIAN__)
+#define COMPILE_FOR_LITTLE_ENDIAN
+
+#elif defined(__i386__) || defined(__x86_64__)
+#define COMPILE_FOR_LITTLE_ENDIAN
+
+#endif
+
 
 
 static int test_byte_order(void)
