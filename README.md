@@ -20,7 +20,7 @@ skip whole containers.
 
 Pack and unpack example from the MessagePack home page:
 
-´´´C
+```c
 void example (void)
 {
     cw_pack_context pc;
@@ -58,7 +58,7 @@ void example (void)
 
     if (cw_unpack_next(&uc) != CWP_RC_END_OF_INPUT)  ERROR;
 }
-´´´
+```
 
 ## Error handling
 
