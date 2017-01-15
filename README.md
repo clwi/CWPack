@@ -21,11 +21,6 @@ skip whole containers.
 Pack and unpack example from the MessagePack home page:
 
 ´´´C
-#include <string.h>
-#include "cwpack.h"
-
-#define ERROR exit(-1)
-
 void example (void)
 {
     cw_pack_context pc;
