@@ -1,8 +1,15 @@
 #CWPack
 
-CWPack is a minimalistic and yet fast and complete implementation of the 
+CWPack is a lightweight and yet complete implementation of the 
 [MessagePack](http://msgpack.org) serialization format 
 [version 5](https://github.com/msgpack/msgpack/blob/master/spec.md).
+
+## Fast, Faster, Fastest
+
+CWPack is the fastest open-source messagepack implementation. It is faster then 
+[MPack](https://github.com/ludocode/mpack)
+and both totally outperform
+[CMP](https://github.com/camgunz/cmp)
 
 ## Design
 
@@ -27,54 +34,60 @@ void example (void)
     char buffer[20];
     cw_pack_context_init (&pc, buffer, 20, 0, 0);
 
-    if (cw_pack_map_size (&pc, 2)) ERROR;
-    if (cw_pack_str (&pc, "compact", 7)) ERROR;
-    if (cw_pack_boolean (&pc, true)) ERROR;
-    if (cw_pack_str (&pc, "schema", 6)) ERROR;
-    if (cw_pack_unsigned (&pc, 0)) ERROR;
+    cw_pack_map_size (&pc, 2);
+    cw_pack_str (&pc, "compact", 7);
+    cw_pack_boolean (&pc, true);
+    cw_pack_str (&pc, "schema", 6);
+    cw_pack_unsigned (&pc, 0);
 
     int length = pc.current - pc.start;
-    if (length > 18) ERROR
+    if (length > 18) ERROR;
 
     cw_unpack_context uc;
     cw_unpack_context_init (&uc, pc.start, length, 0, 0);
 
-    if (cw_unpack_next(&uc))  ERROR;
+    cw_unpack_next(&uc);
     if (uc.item.type != CWP_ITEM_MAP || uc.item.as.map.size != 2) ERROR;
 
-    if (cw_unpack_next(&uc))  ERROR;
+    cw_unpack_next(&uc);
     if (uc.item.type != CWP_ITEM_STR || uc.item.as.str.length != 7)) ERROR;
     if (strncmp("compact", uc.item.as.str.start, 7)) ERROR;
 
-    if (cw_unpack_next(&uc))  ERROR;
+    cw_unpack_next(&uc);
     if (uc.item.type != CWP_ITEM_BOOLEAN || uc.item.as.boolean != true) ERROR;
 
-    if (cw_unpack_next(&uc))  ERROR;
+    cw_unpack_next(&uc);
     if (uc.item.type != CWP_ITEM_STR || uc.item.as.str.length != 6)) ERROR;
     if (strncmp("schema", uc.item.as.str.start, 6)) ERROR;
 
-    if (cw_unpack_next(&uc))  ERROR;
+    cw_unpack_next(&uc);
     if (uc.item.type != CWP_ITEM_POSITIVE_INTEGER || uc.item.as.u64 != 0) ERROR;
 
-    if (cw_unpack_next(&uc) != CWP_RC_END_OF_INPUT)  ERROR;
+    cw_unpack_next(&uc);
+    if (uc.return_code != CWP_RC_END_OF_INPUT)  ERROR;
 }
 ```
+
+In the examples folder there are more examples.
+
+## Backward compatibility
+
+CWPack may be run in compatibility mode. It affects only packing; EXTs are considered illegal, BINs is transformed to STRs and generation of STR8 is supressed.
 
 ## Error handling
 
 CWPack does not check for illegal values (e.g. in STRs for illegal unicode characters).
 
-When an error is detected in a context, that context is stopped and all calls are returned 
-with the stopped error code.
+When an error is detected in a context, that context is stopped and all future calls to that context are immediatly returned without any actions.
 
 ## Build
 
-CWPack consists of a single src file with corresponding header file. It is written 
-in C and the files are together ~ 1K lines. No build is neccesary, just include the 
+CWPack consists of a single src file and two header files. It is written 
+in strict ansi C and the files are together ~ 1.1K lines. No separate build is neccesary, just include the 
 files in your own build.
 
 CWPack has no dependencies to other libraries.
 
-## Module test
+## Test
 
-Included in the test folder in the repository is a simple module test and a shell script to run it.
+Included in the test folder are a module test and a performance test and shell scripts to run them.

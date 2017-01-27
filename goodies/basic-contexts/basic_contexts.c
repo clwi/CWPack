@@ -1,4 +1,4 @@
-/*      CWPack/example - contexts.c   */
+/*      CWPack/example - basic_contexts.c   */
 /*
  The MIT License (MIT)
  
@@ -24,7 +24,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "contexts.h"
+#include "basic_contexts.h"
 
 
 
@@ -50,34 +50,24 @@ static int handle_memory_pack_overflow(struct cw_pack_context* pc, unsigned long
 }
 
 
-cw_pack_context* new_memory_pack_context (unsigned long initial_buffer_length)
+void init_dynamic_memory_pack_context (dynamic_memory_pack_context* dmpc, unsigned long initial_buffer_length)
 {
-    cw_pack_context* pc = malloc(sizeof(cw_pack_context));
-    if (!pc)
-        return NULL;
-    
-    unsigned long buffer_length = (initial_buffer_length? initial_buffer_length : 1024);
+    unsigned long buffer_length = (initial_buffer_length > 0 ? initial_buffer_length : 1024);
     void *buffer = malloc (buffer_length);
     if (!buffer)
     {
-        free(pc);
-        return NULL;
+        dmpc->pc.return_code = CWP_RC_MALLOC_ERROR;
+        return;
     }
     
-    if (cw_pack_context_init(pc, buffer, buffer_length, &handle_memory_pack_overflow))
-    {
-        free(pc->start);
-        free(pc);
-        return NULL;
-    }
-    return pc;
+    cw_pack_context_init((cw_pack_context*)dmpc, buffer, buffer_length, &handle_memory_pack_overflow);
 }
 
 
-void free_memory_pack_context(cw_pack_context* pc)
+void free_dynamic_memory_pack_context(dynamic_memory_pack_context* dmpc)
 {
-    free(pc->start);
-    free(pc);
+    if (dmpc->pc.return_code != CWP_RC_MALLOC_ERROR)
+        free(dmpc->pc.start);
 }
 
 
@@ -85,15 +75,10 @@ void free_memory_pack_context(cw_pack_context* pc)
 /*****************************************  FILE PACK CONTEXT  **********************************/
 
 
-typedef struct  {
-    cw_pack_context pc;
-    FILE*           file;
-} file_pack_context;
 
-
-static int handle_file_pack_overflow(struct cw_pack_context* pc, unsigned long more)
+static int handle_stream_pack_overflow(struct cw_pack_context* pc, unsigned long more)
 {
-    int rc = flush_file_pack_context(pc);
+    int rc = flush_stream_pack_context((stream_pack_context*)pc);
     if (rc != CWP_RC_OK)
         return rc;
 
@@ -116,53 +101,40 @@ static int handle_file_pack_overflow(struct cw_pack_context* pc, unsigned long m
 }
 
 
-cw_pack_context* new_file_pack_context (unsigned long initial_buffer_length, FILE* file)
+void init_stream_pack_context (stream_pack_context* spc, unsigned long initial_buffer_length, FILE* file)
 {
-    file_pack_context* fpc = malloc(sizeof(file_pack_context));
-    
-    if (!fpc)
-        return NULL;
-    
-    unsigned long buffer_length = (initial_buffer_length? initial_buffer_length : 1024);
+    unsigned long buffer_length = (initial_buffer_length > 0 ? initial_buffer_length : 4096);
     void *buffer = malloc (buffer_length);
     if (!buffer)
     {
-        free(fpc);
-        return NULL;
+        spc->pc.return_code = CWP_RC_MALLOC_ERROR;
+        return;
     }
-    fpc->file = file;
+    spc->file = file;
     
-    cw_pack_context* pc = (cw_pack_context*)fpc;
-    if (cw_pack_context_init(pc, buffer, buffer_length, &handle_file_pack_overflow))
-    {
-        free(pc->start);
-        free(fpc);
-        return NULL;
-    }
-    return pc;
+    cw_pack_context_init((cw_pack_context*)spc, buffer, buffer_length, &handle_stream_pack_overflow);
 }
 
 
-int flush_file_pack_context(cw_pack_context* pc)
+int flush_stream_pack_context(stream_pack_context* spc)
 {
-    unsigned long contains = (unsigned long)(pc->current - pc->start);
+    unsigned long contains = (unsigned long)(spc->pc.current - spc->pc.start);
     if (contains)
     {
-        file_pack_context* fpc = (file_pack_context*)pc;
-        unsigned long rc = fwrite(pc->start, contains, 1, fpc->file);
+        unsigned long rc = fwrite(spc->pc.start, contains, 1, spc->file);
         if (rc != 1)
         {
-            pc->errno = ferror(fpc->file);
+            spc->pc.err_no = ferror(spc->file);
             return CWP_RC_ERROR_IN_HANDLER;
         }
     }
     return CWP_RC_OK;
 }
 
-void free_file_pack_context(cw_pack_context* pc)
+void free_stream_pack_context(stream_pack_context* spc)
 {
-    free(pc->start);
-    free(pc);
+    if (spc->pc.return_code != CWP_RC_MALLOC_ERROR)
+        free(spc->pc.start);
 }
 
 
@@ -172,28 +144,21 @@ void free_file_pack_context(cw_pack_context* pc)
 /*****************************************  FILE UNPACK CONTEXT  ********************************/
 
 
-typedef struct  {
-    cw_unpack_context   uc;
-    unsigned long       buffer_length;
-    FILE*               file;
-} file_unpack_context;
-
-
-static int handle_file_unpack_underflow(struct cw_unpack_context* uc, unsigned long more)
+static int handle_stream_unpack_underflow(struct cw_unpack_context* uc, unsigned long more)
 {
-    file_unpack_context* fuc = (file_unpack_context*)uc;
+    stream_unpack_context* suc = (stream_unpack_context*)uc;
     unsigned long remains = (unsigned long)(uc->end - uc->current);
     if (remains)
     {
         memmove (uc->start, uc->current, remains);
     }
     
-    if (fuc->buffer_length < more)
+    if (suc->buffer_length < more)
     {
-        while (fuc->buffer_length < more)
-            fuc->buffer_length = 2 * fuc->buffer_length;
+        while (suc->buffer_length < more)
+            suc->buffer_length = 2 * suc->buffer_length;
         
-        void *new_buffer = realloc (uc->start, fuc->buffer_length);
+        void *new_buffer = realloc (uc->start, suc->buffer_length);
         if (!new_buffer)
             return CWP_RC_BUFFER_UNDERFLOW;
         
@@ -201,12 +166,12 @@ static int handle_file_unpack_underflow(struct cw_unpack_context* uc, unsigned l
     }
     uc->current = uc->start;
     uc->end = uc->start + remains;
-    unsigned long l = fread(uc->end, 1, fuc->buffer_length - remains, fuc->file);
+    unsigned long l = fread(uc->end, 1, suc->buffer_length - remains, suc->file);
     if (!l)
     {
-        if (feof(fuc->file))
+        if (feof(suc->file))
             return CWP_RC_END_OF_INPUT;
-        uc->errno = ferror(fuc->file);
+        suc->uc.err_no = ferror(suc->file);
         return CWP_RC_ERROR_IN_HANDLER;
     }
     
@@ -216,39 +181,26 @@ static int handle_file_unpack_underflow(struct cw_unpack_context* uc, unsigned l
 }
 
 
-cw_unpack_context* new_file_unpack_context (unsigned long initial_buffer_length, FILE* file)
+void init_stream_unpack_context (stream_unpack_context* suc, unsigned long initial_buffer_length, FILE* file)
 {
-    file_unpack_context* fuc = malloc(sizeof(file_unpack_context));
-    
-    if (!fuc)
-        return NULL;
-    
     unsigned long buffer_length = (initial_buffer_length? initial_buffer_length : 1024);
     void *buffer = malloc (buffer_length);
     if (!buffer)
     {
-        free(fuc);
-        return NULL;
+        suc->uc.return_code = CWP_RC_MALLOC_ERROR;
+        return;
     }
-    fuc->file = file;
-    fuc->buffer_length = buffer_length;
+    suc->file = file;
+    suc->buffer_length = buffer_length;
     
-    cw_unpack_context* uc = (cw_unpack_context*)fuc;
-    if (cw_unpack_context_init(uc, buffer, 0, &handle_file_unpack_underflow))
-    {
-        free(uc->start);
-        free(fuc);
-        return NULL;
-    }
-    
-    return uc;
+    cw_unpack_context_init((cw_unpack_context*)suc, buffer, 0, &handle_stream_unpack_underflow);
 }
 
 
-void free_file_unpack_context(cw_unpack_context* uc)
+void free_stream_unpack_context(stream_unpack_context* suc)
 {
-    free(uc->start);
-    free(uc);
+    if (suc->uc.return_code != CWP_RC_MALLOC_ERROR)
+        free(suc->uc.start);
 }
 
 

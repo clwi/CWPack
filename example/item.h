@@ -25,10 +25,7 @@
 #define item_h
 
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-    
+
     
     /**************  ITEMS  **********************/
     
@@ -85,8 +82,4 @@ extern "C" {
     
     
     
-#ifdef __cplusplus
-}
-#endif
-
 #endif /* item_h */

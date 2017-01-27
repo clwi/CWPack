@@ -26,14 +26,13 @@
 #include <string.h>
 
 #include <stdlib.h>
-#include <sys/fcntl.h>
-//#include <sys/errno.h>
 
 #include "cwpack.h"
+#include "cwpack_defines.h"
 
 
-cw_pack_context testbuf;
-cw_unpack_context testinbuf;
+cw_pack_context pack_ctx;
+cw_unpack_context unpack_ctx;
 char TEST_area[70000];
 uint8_t outbuffer[70000];
 
@@ -70,17 +69,17 @@ static char char2hex (char c)
 }
 
 
-static void check_pack_result(const char* expected_header, unsigned long data_length)
+static void check_pack_result(const char* expected_header, unsigned long data_length)__attribute__ ((optnone))
 {
     // expected contains the result in HEX
     unsigned long header_length = strlen(expected_header) / 2;
-    if (testbuf.current - outbuffer == (long)(header_length + data_length))
+    if (pack_ctx.current - outbuffer == (long)(header_length + data_length))
     {
         
         if (header_length*2 == strlen(expected_header))
         {
             unsigned long i;
-            uint_fast8_t *p = (uint_fast8_t*)outbuffer;
+            uint8_t *p = (uint8_t*)outbuffer;
             const char *ucp = expected_header;
             for (i = 0; i < header_length; i++)
             {
@@ -134,19 +133,12 @@ static void check_pack_result(const char* expected_header, unsigned long data_le
 }
 
 
-static void check_pack(int call, int result)
-{
-    int rc = call;
-    if (rc != result)
-        ERROR2("rc=", rc, result);
-}
-
 static void check_unpack(int val, int result)
 {
-    int rc = cw_unpack_next(&testinbuf);
-    if (rc != result)
-        ERROR2("rc=", rc, result);
-    if (rc == 0 && testinbuf.item.type != CWP_ITEM_POSITIVE_INTEGER && testinbuf.item.as.i64 != val)
+    cw_unpack_next(&unpack_ctx);
+    if (unpack_ctx.return_code != result)
+        ERROR2("rc=", unpack_ctx.return_code, result);
+    if (unpack_ctx.return_code == 0 && unpack_ctx.item.type != CWP_ITEM_POSITIVE_INTEGER && unpack_ctx.item.as.i64 != val)
         ERROR("Wrong item");
 }
 
@@ -157,25 +149,57 @@ int main(int argc, const char * argv[])
 {
     printf("CWPack module test started.\n");
     error_count = 0;
-
-        
+    
+    bool endian_switch_found = false;
+#ifdef COMPILE_FOR_BIG_ENDIAN
+    printf("Compiled for big endian.\n");
+    endian_switch_found = true;
+#endif
+    
+#ifdef COMPILE_FOR_LITTLE_ENDIAN
+    printf("Compiled for little endian.\n");
+    endian_switch_found = true;
+#endif
+    
+    if (!endian_switch_found)
+        printf("Compiled for all endians.\n");
+    
+    const char *endianness = "1234";
+    switch (*(uint32_t*)endianness)
+    {
+        case 0x31323334UL:
+            printf("Running on big endian hardware.\n\n");
+            break;
+            
+        case 0x34333231UL:
+            printf("Running on little endian hardware.\n\n");
+            break;
+            
+        default:
+            printf("Running on neither little nor big endian hardware.\n\n");
+            break;
+    }
+    
+   
     //*******************   TEST cwpack pack  ****************************
     
     
 #define TESTP(call,data,result)                     \
-    testbuf.current = outbuffer;                    \
-    if(cw_pack_##call (&testbuf, data))             \
+    pack_ctx.current = outbuffer;                    \
+    cw_pack_##call (&pack_ctx, data);                \
+    if(pack_ctx.return_code)                         \
         ERROR("In pack");                           \
     check_pack_result(result,0)
     
     
     
-    if (cw_pack_context_init (&testbuf, outbuffer, 70000, 0))
+    cw_pack_context_init (&pack_ctx, outbuffer, 70000, 0);
+    if (pack_ctx.return_code == CWP_RC_WRONG_BYTE_ORDER)
     {
-        ERROR("Compiled for wrong byte order");
+        ERROR("***** Compiled for wrong byte order, test terminated *****\n\n");
         exit(1);
     }
-    int i;
+    
     unsigned int ui;
     for (ui=0; ui<70000; ui++)
     {
@@ -184,10 +208,16 @@ int main(int argc, const char * argv[])
     
     
     // TESTP NIL
-    cw_pack_nil(&testbuf);
+    cw_pack_nil(&pack_ctx);
     check_pack_result("c0",0);
     
     // TESTP boolean
+    pack_ctx.current = outbuffer;
+    cw_pack_true(&pack_ctx);
+    check_pack_result("c3",0);
+    pack_ctx.current = outbuffer;
+    cw_pack_false(&pack_ctx);
+    check_pack_result("c2",0);
     TESTP(boolean,0,"c2");
     TESTP(boolean,1,"c3");
     
@@ -216,9 +246,13 @@ int main(int argc, const char * argv[])
     float f1 = (float)3.14;
     TESTP(float,0.0,"ca00000000");
     TESTP(float,f1,"ca4048f5c3");
+    TESTP(float,37.25,"ca42150000");
     TESTP(double,0.0,"cb0000000000000000");
     TESTP(double,f1,"cb40091eb860000000");
     TESTP(double,3.14,"cb40091eb851eb851f");
+    TESTP(double,37.25,"cb4042a00000000000");
+    TESTP(real,37.25,"ca42150000");
+    TESTP(real,3.14,"cb40091eb851eb851f");
     
     // TESTP array
     TESTP(array_size,0,"90");
@@ -236,8 +270,9 @@ int main(int argc, const char * argv[])
     
     
 #define TESTP_AREA(call,len,header)                     \
-    testbuf.current = outbuffer;                        \
-    if(cw_pack_##call (&testbuf, TEST_area, len))       \
+    pack_ctx.current = outbuffer;                        \
+    cw_pack_##call (&pack_ctx, TEST_area, len);          \
+    if(pack_ctx.return_code)                             \
         ERROR("In pack");                               \
     check_pack_result(header, len)
     
@@ -258,8 +293,9 @@ int main(int argc, const char * argv[])
     TESTP_AREA(bin,65536,"c600010000");
     
 #define TESTP_EXT(call,type,len,header)                 \
-    testbuf.current = outbuffer;                        \
-    if(cw_pack_##call (&testbuf, type, TEST_area, len)) \
+    pack_ctx.current = outbuffer;                        \
+    cw_pack_##call (&pack_ctx, type, TEST_area, len);    \
+    if(pack_ctx.return_code)                             \
         ERROR("In pack");                               \
     check_pack_result(header, len)
     
@@ -287,16 +323,15 @@ int main(int argc, const char * argv[])
     unsigned long len = strlen(buffer)/2;                                               \
     for (ui = 0; ui < len; ui++)                                                        \
     inputbuf[ui] = (uint8_t)(char2hex(buffer[2*ui])<<4) + char2hex(buffer[2*ui +1]);    \
-    cw_unpack_context_init (&testinbuf, inputbuf, len+blob_length, 0);                  \
-    if ((i = cw_unpack_next(&testinbuf)))                                               \
-        ERROR1("In unpack_next, rc = ",i);                                              \
-    if (testinbuf.item.type != CWP_ITEM_##etype)                                        \
-    ERROR("In unpack, type error");                                                     \
+    cw_unpack_context_init (&unpack_ctx, inputbuf, len+blob_length, 0);                 \
+    cw_unpack_next(&unpack_ctx);                                                       \
+    if (unpack_ctx.item.type != CWP_ITEM_##etype)                                       \
+        ERROR("In unpack, type error");                                                 \
 }
     
 #define TESTUP_VAL(buffer,etype,var,val)                    \
     TESTUP(buffer,etype);                                   \
-    if (testinbuf.item.as.var != val)                       \
+    if (unpack_ctx.item.as.var != val)                       \
         ERROR("In unpack, value error");
 
     unsigned long blob_length = 0;
@@ -397,18 +432,23 @@ int main(int argc, const char * argv[])
     
     //*******************   TEST skip   ***************************
     
-    cw_pack_context_init (&testbuf, outbuffer, 100, 0);
-    check_pack( cw_pack_array_size(&testbuf,2), CWP_RC_OK);
-    check_pack( cw_pack_str(&testbuf,"Test of skip",12), CWP_RC_OK); //array component
-    check_pack( cw_pack_unsigned(&testbuf,0x68357), CWP_RC_OK); //array component
-    check_pack( cw_pack_unsigned(&testbuf,0x952), CWP_RC_OK); //first item after array
-    
-    cw_unpack_context_init (&testinbuf, testbuf.start, (unsigned long)(testbuf.current-testbuf.start), 0);
-
-    cw_skip_items (&testinbuf, 1); /* skip whole array */
-    check_unpack (0x952, CWP_RC_OK);
-    check_unpack (0, CWP_RC_END_OF_INPUT);
-    
+    cw_pack_context_init (&pack_ctx, outbuffer, 100, 0);
+    cw_pack_array_size(&pack_ctx,2);
+    cw_pack_str(&pack_ctx,"Test of skip",12); //array component
+    cw_pack_unsigned(&pack_ctx,0x68357); //array component
+    cw_pack_unsigned(&pack_ctx,0x952); //first item after array
+    if(pack_ctx.return_code)
+    {
+        ERROR("Couldn't generate testdata for skip_items");
+    }
+    else
+    {
+        cw_unpack_context_init (&unpack_ctx, pack_ctx.start, (unsigned long)(pack_ctx.current-pack_ctx.start), 0);
+        
+        cw_skip_items (&unpack_ctx, 1); /* skip whole array */
+        check_unpack (0x952, CWP_RC_OK);
+        check_unpack (0, CWP_RC_END_OF_INPUT);
+    }
     
     
     //*************************************************************

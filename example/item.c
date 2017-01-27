@@ -27,7 +27,7 @@
 #include <stdio.h>
 
 #include "item.h"
-#include "contexts.h"
+#include "basic_contexts.h"
 
 
 
@@ -435,9 +435,10 @@ static void item32packContext(cw_pack_context* pc, item_root* item)
 
 void item32cwpackFile (FILE* file, item_root* item)
 {
-    cw_pack_context* pc = new_file_pack_context(10, file);
-    item32packContext (pc, item);
-    flush_file_pack_context(pc);
+    stream_pack_context spc;
+    init_stream_pack_context(&spc, 10, file);
+    item32packContext (&spc.pc, item);
+    flush_stream_pack_context(&spc);
 }
 
 
@@ -519,8 +520,9 @@ static item_root* packContext2item3 (cw_unpack_context* uc)
 
 item_root* cwpackFile2item3 (FILE* file)
 {
-    cw_unpack_context* uc = new_file_unpack_context(10, file);
-    return packContext2item3(uc);
+    stream_unpack_context suc;
+    init_stream_unpack_context(&suc, 0, file);
+    return packContext2item3(&suc.uc);
 }
 
 
