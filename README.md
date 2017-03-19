@@ -72,18 +72,18 @@ In the examples folder there are more examples.
 
 ## Backward compatibility
 
-CWPack may be run in compatibility mode. It affects only packing; EXTs are considered illegal, BINs is transformed to STRs and generation of STR8 is supressed.
+CWPack may be run in compatibility mode. It affects only packing; EXT is considered illegal, BIN are transformed to STR and generation of STR8 is supressed.
 
 ## Error handling
 
-CWPack does not check for illegal values (e.g. in STRs for illegal unicode characters).
+When an error is detected in a context, the context is stopped and all future calls to that context are immediatly returned without any actions.
 
-When an error is detected in a context, that context is stopped and all future calls to that context are immediatly returned without any actions.
+CWPack does not check for illegal values (e.g. in STR for illegal unicode characters).
 
 ## Build
 
 CWPack consists of a single src file and two header files. It is written 
-in strict ansi C and the files are together ~ 1.1K lines. No separate build is neccesary, just include the 
+in strict ansi C and the files are together ~ 1.2K lines. No separate build is neccesary, just include the 
 files in your own build.
 
 CWPack has no dependencies to other libraries.

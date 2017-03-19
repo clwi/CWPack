@@ -384,6 +384,13 @@ void cw_pack_ext (cw_pack_context* pack_context, int8_t type, const void* v, uin
 }
 
 
+void cw_pack_insert (cw_pack_context* pack_context, const void* v, uint32_t l)
+{
+    uint8_t *p;
+    cw_pack_reserve_space(l);
+    memcpy(p,v,l);
+}
+
 /*******************************   U N P A C K   **********************************/
 
 

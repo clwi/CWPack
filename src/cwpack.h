@@ -83,6 +83,7 @@ void cw_pack_str (cw_pack_context* pack_context, const char* v, uint32_t l);
 void cw_pack_bin (cw_pack_context* pack_context, const void* v, uint32_t l);
 void cw_pack_ext (cw_pack_context* pack_context, int8_t type, const void* v, uint32_t l);
 
+void cw_pack_insert (cw_pack_context* pack_context, const void* v, uint32_t l);
 
 
 /*****************************   U N P A C K   ********************************/
@@ -110,7 +111,7 @@ typedef enum
 
 
 typedef struct {
-    const uint8_t*  start;
+    const void*     start;
     uint32_t        length;
 } cwpack_blob;
 
