@@ -52,8 +52,7 @@ typedef struct
 
 void init_stream_pack_context (stream_pack_context* spc, unsigned long initial_buffer_length, FILE* file);
 
-int flush_stream_pack_context(stream_pack_context* spc);
-void free_stream_pack_context(stream_pack_context* spc);
+void terminate_stream_pack_context(stream_pack_context* spc);
 
 
 
@@ -69,10 +68,50 @@ typedef struct
 
 void init_stream_unpack_context (stream_unpack_context* suc, unsigned long initial_buffer_length, FILE* file);
 
-void free_stream_unpack_context(stream_unpack_context* suc);
+void terminate_stream_unpack_context(stream_unpack_context* suc);
 
 
-/*****************************************  E P I L O G U E  ************************************/
+
+/*****************************************  FILE PACK CONTEXT  ********************************/
+
+typedef struct
+{
+    cw_pack_context pc;
+    int             fileDescriptor;
+    uint8_t         *barrier;
+} file_pack_context;
+
+
+void init_file_pack_context (file_pack_context* spc, unsigned long initial_buffer_length, int fileDescriptor);
+
+void file_pack_context_set_barrier (file_pack_context* spc);
+void file_pack_context_release_barrier (file_pack_context* spc);
+
+void terminate_file_pack_context(file_pack_context* spc);
+
+
+
+/*****************************************  FILE UNPACK CONTEXT  ******************************/
+
+typedef struct
+{
+    cw_unpack_context   uc;
+    unsigned long       buffer_length;
+    int                 fileDescriptor;
+    uint8_t             *barrier;
+} file_unpack_context;
+
+
+void init_file_unpack_context (file_unpack_context* suc, unsigned long initial_buffer_length, int fileDescriptor);
+
+void file_unpack_context_set_barrier (file_unpack_context* suc);
+void file_unpack_context_release_barrier (file_unpack_context* suc);
+
+void terminate_file_unpack_context(file_unpack_context* suc);
+
+
+
+/*****************************************  E P I L O G U E  **********************************/
 
 
 #endif /* basic_contexts_h */

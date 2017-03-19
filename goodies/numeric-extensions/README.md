@@ -6,11 +6,10 @@ Numeric Extensions solves the byte order problem when the value of an extension 
 ## Pack
 
 ```C
-int cw_pack_ext_integer (cw_pack_context* pack_context, int8_t type, int64_t i);
-int cw_pack_ext_float (cw_pack_context* pack_context, int8_t type, float f);
-int cw_pack_ext_double (cw_pack_context* pack_context, int8_t type, double d);
+void cw_pack_ext_integer (cw_pack_context* pack_context, int8_t type, int64_t i);
+void cw_pack_ext_float (cw_pack_context* pack_context, int8_t type, float f);
+void cw_pack_ext_double (cw_pack_context* pack_context, int8_t type, double d);
 ```
-The packing functions works just as the original packing functions with the same error returns etc..
 
 ## Unpack
 

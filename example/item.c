@@ -438,7 +438,7 @@ void item32cwpackFile (FILE* file, item_root* item)
     stream_pack_context spc;
     init_stream_pack_context(&spc, 10, file);
     item32packContext (&spc.pc, item);
-    flush_stream_pack_context(&spc);
+    terminate_stream_pack_context(&spc);
 }
 
 
@@ -522,7 +522,9 @@ item_root* cwpackFile2item3 (FILE* file)
 {
     stream_unpack_context suc;
     init_stream_unpack_context(&suc, 0, file);
-    return packContext2item3(&suc.uc);
+    item_root* result = packContext2item3(&suc.uc);
+    terminate_stream_unpack_context(&suc);
+    return result;
 }
 
 
