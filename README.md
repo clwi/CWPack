@@ -1,15 +1,13 @@
-#CWPack
+# CWPack
 
 CWPack is a lightweight and yet complete implementation of the 
 [MessagePack](http://msgpack.org) serialization format 
 [version 5](https://github.com/msgpack/msgpack/blob/master/spec.md).
 
-## Fast, Faster, Fastest
+## Excellent Performance
 
-CWPack is the fastest open-source messagepack implementation. It is faster then 
-[MPack](https://github.com/ludocode/mpack)
-and both totally outperform
-[CMP](https://github.com/camgunz/cmp)
+Together with [MPack](https://github.com/ludocode/mpack), CWPack is the fastest open-source messagepack implementation. Both totally outperform
+[CMP](https://github.com/camgunz/cmp) and [msgpack-c](https://github.com/msgpack/msgpack-c)
 
 ## Design
 

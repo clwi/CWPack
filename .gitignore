@@ -1,6 +1,9 @@
 # Finder ---------------------------
 .DS_Store
 
+# Explicit no GIT
+*.noGIT
+
 # Object files
 *.o
 
