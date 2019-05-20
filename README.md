@@ -30,7 +30,7 @@ void example (void)
 {
     cw_pack_context pc;
     char buffer[20];
-    cw_pack_context_init (&pc, buffer, 20, 0, 0);
+    cw_pack_context_init (&pc, buffer, 20, 0);
 
     cw_pack_map_size (&pc, 2);
     cw_pack_str (&pc, "compact", 7);
@@ -42,20 +42,20 @@ void example (void)
     if (length > 18) ERROR;
 
     cw_unpack_context uc;
-    cw_unpack_context_init (&uc, pc.start, length, 0, 0);
+    cw_unpack_context_init (&uc, pc.start, length, 0);
 
     cw_unpack_next(&uc);
     if (uc.item.type != CWP_ITEM_MAP || uc.item.as.map.size != 2) ERROR;
 
     cw_unpack_next(&uc);
-    if (uc.item.type != CWP_ITEM_STR || uc.item.as.str.length != 7)) ERROR;
+    if (uc.item.type != CWP_ITEM_STR || uc.item.as.str.length != 7) ERROR;
     if (strncmp("compact", uc.item.as.str.start, 7)) ERROR;
 
     cw_unpack_next(&uc);
     if (uc.item.type != CWP_ITEM_BOOLEAN || uc.item.as.boolean != true) ERROR;
 
     cw_unpack_next(&uc);
-    if (uc.item.type != CWP_ITEM_STR || uc.item.as.str.length != 6)) ERROR;
+    if (uc.item.type != CWP_ITEM_STR || uc.item.as.str.length != 6) ERROR;
     if (strncmp("schema", uc.item.as.str.start, 6)) ERROR;
 
     cw_unpack_next(&uc);
