@@ -1,4 +1,4 @@
-/*      CWPack/example - basic_contexts.h   */
+/*      CWPack/goodies - basic_contexts.h   */
 /*
  The MIT License (MIT)
  
@@ -105,6 +105,7 @@ typedef struct
 void init_file_unpack_context (file_unpack_context* suc, unsigned long initial_buffer_length, int fileDescriptor);
 
 void file_unpack_context_set_barrier (file_unpack_context* suc);
+void file_unpack_context_rescan_from_barrier (file_unpack_context* suc);
 void file_unpack_context_release_barrier (file_unpack_context* suc);
 
 void terminate_file_unpack_context(file_unpack_context* suc);

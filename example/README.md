@@ -1,4 +1,4 @@
-#CWPack - Example
+# CWPack / Example
 
 The example contains a program that takes a json file and converts it to a messagePack file, then converts the latter back to json.
 

@@ -1,17 +1,32 @@
-//
-//  numeric_extensions_test.c
-//  CWPack
-//
-//  Created by Claes Wihlborg on 2017-01-17.
-//  Copyright © 2017 Claes Wihlborg. All rights reserved.
-//
+/*      CWPack/goodies - numeric_extensions_test.c   */
+/*
+ The MIT License (MIT)
+
+ Copyright (c) 2017 Claes Wihlborg
+
+ Permission is hereby granted, free of charge, to any person obtaining a copy of this
+ software and associated documentation files (the "Software"), to deal in the Software
+ without restriction, including without limitation the rights to use, copy, modify,
+ merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit
+ persons to whom the Software is furnished to do so, subject to the following conditions:
+
+ The above copyright notice and this permission notice shall be included in all copies or
+ substantial portions of the Software.
+
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
+ BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+ DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "cwpack.h"
-#include "cwpack_defines.h"
+#include "cwpack_internals.h"
 #include "numeric_extensions.h"
 
 
@@ -118,7 +133,6 @@ int main(int argc, const char * argv[])
 {
     printf("CWPack numeric extensions test started.\n");
     error_count = 0;
-    int i;
     
     bool endian_switch_found = false;
 #ifdef COMPILE_FOR_BIG_ENDIAN
@@ -197,8 +211,9 @@ int main(int argc, const char * argv[])
         ERROR1("In unpack_next, rc = ",unpack_ctx.return_code);                             \
     if (unpack_ctx.item.type != etype)                                                      \
         ERROR("In unpack, type error");                                                     \
-    if ((i=get_ext_##call (&unpack_ctx, &call##_var)))                                      \
-        ERROR1("In get_ext, rc = ",i);                                                      \
+    call##_var = get_ext_##call (&unpack_ctx);                                              \
+    if (unpack_ctx.return_code)                                                             \
+        ERROR1("In get_ext, rc = ",unpack_ctx.return_code);                                 \
     if (call##_var != value)                                                                \
         ERROR("In unpack, value error");                                                    \
 }

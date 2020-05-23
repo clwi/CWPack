@@ -1,4 +1,4 @@
-/*      CWPack Module test - main.c   */
+/*      CWPack/test cwpack_module_test.c   */
 /*
  The MIT License (MIT)
  
@@ -28,7 +28,8 @@
 #include <stdlib.h>
 
 #include "cwpack.h"
-#include "cwpack_defines.h"
+#include "cwpack_config.h"
+#include "cwpack_utils.h"
 
 
 cw_pack_context pack_ctx;
@@ -251,8 +252,10 @@ int main(int argc, const char * argv[])
     TESTP(double,f1,"cb40091eb860000000");
     TESTP(double,3.14,"cb40091eb851eb851f");
     TESTP(double,37.25,"cb4042a00000000000");
-    TESTP(real,37.25,"ca42150000");
-    TESTP(real,3.14,"cb40091eb851eb851f");
+    TESTP(double_opt,37.25,"ca42150000");
+    TESTP(double_opt,f1,"ca4048f5c3");
+    TESTP(double_opt,3.14,"cb40091eb851eb851f");
+    TESTP(double_opt,-32,"e0");
     
     // TESTP array
     TESTP(array_size,0,"90");
@@ -331,7 +334,7 @@ int main(int argc, const char * argv[])
     
 #define TESTUP_VAL(buffer,etype,var,val)                    \
     TESTUP(buffer,etype);                                   \
-    if (unpack_ctx.item.as.var != val)                       \
+    if (unpack_ctx.item.as.var != val)                      \
         ERROR("In unpack, value error");
 
     unsigned long blob_length = 0;

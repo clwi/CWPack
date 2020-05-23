@@ -26,21 +26,25 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <time.h>
 
 
 
 /*******************************   Return Codes   *****************************/
 
-#define CWP_RC_OK                     0
-#define CWP_RC_END_OF_INPUT          -1
-#define CWP_RC_BUFFER_OVERFLOW       -2
-#define CWP_RC_BUFFER_UNDERFLOW      -3
-#define CWP_RC_MALFORMED_INPUT       -4
-#define CWP_RC_WRONG_BYTE_ORDER      -5
-#define CWP_RC_ERROR_IN_HANDLER      -6
-#define CWP_RC_ILLEGAL_CALL          -7
-#define CWP_RC_MALLOC_ERROR          -8
-#define CWP_RC_STOPPED               -9
+#define CWP_RC_OK                         0
+#define CWP_RC_END_OF_INPUT              -1
+#define CWP_RC_BUFFER_OVERFLOW           -2
+#define CWP_RC_BUFFER_UNDERFLOW          -3
+#define CWP_RC_MALFORMED_INPUT           -4
+#define CWP_RC_WRONG_BYTE_ORDER          -5
+#define CWP_RC_ERROR_IN_HANDLER          -6
+#define CWP_RC_ILLEGAL_CALL              -7
+#define CWP_RC_MALLOC_ERROR              -8
+#define CWP_RC_STOPPED                   -9
+#define CWP_RC_TYPE_ERROR               -10
+#define CWP_RC_VALUE_ERROR              -11
+#define CWP_RC_WRONG_TIMESTAMP_LENGTH   -12
 
 
 
@@ -50,20 +54,24 @@
 struct cw_pack_context;
 
 typedef int (*pack_overflow_handler)(struct cw_pack_context*, unsigned long);
+typedef int (*pack_flush_handler)(struct cw_pack_context*);
 
 typedef struct cw_pack_context {
-    uint8_t*                start;
     uint8_t*                current;
+    uint8_t*                start;
     uint8_t*                end;
     bool                    be_compatible;
     int                     return_code;
     int                     err_no;          /* handlers can save error here */
     pack_overflow_handler   handle_pack_overflow;
+    pack_flush_handler      handle_flush;
 } cw_pack_context;
 
 
 int cw_pack_context_init (cw_pack_context* pack_context, void* data, unsigned long length, pack_overflow_handler hpo);
 void cw_pack_set_compatibility (cw_pack_context* pack_context, bool be_compatible);
+void cw_pack_set_flush_handler (cw_pack_context* pack_context, pack_flush_handler handle_flush);
+void cw_pack_flush (cw_pack_context* pack_context);
 
 void cw_pack_nil (cw_pack_context* pack_context);
 void cw_pack_true (cw_pack_context* pack_context);
@@ -75,13 +83,14 @@ void cw_pack_unsigned (cw_pack_context* pack_context, uint64_t i);
 
 void cw_pack_float (cw_pack_context* pack_context, float f);
 void cw_pack_double (cw_pack_context* pack_context, double d);
-void cw_pack_real (cw_pack_context* pack_context, double d);   /* Pack as float if precision isn't destroyed */
+/* void cw_pack_real (cw_pack_context* pack_context, double d);   moved to cwpack_utils */
 
 void cw_pack_array_size (cw_pack_context* pack_context, uint32_t n);
 void cw_pack_map_size (cw_pack_context* pack_context, uint32_t n);
 void cw_pack_str (cw_pack_context* pack_context, const char* v, uint32_t l);
 void cw_pack_bin (cw_pack_context* pack_context, const void* v, uint32_t l);
 void cw_pack_ext (cw_pack_context* pack_context, int8_t type, const void* v, uint32_t l);
+void cw_pack_time (cw_pack_context* pack_context, struct timespec* t);
 
 void cw_pack_insert (cw_pack_context* pack_context, const void* v, uint32_t l);
 
@@ -92,6 +101,7 @@ void cw_pack_insert (cw_pack_context* pack_context, const void* v, uint32_t l);
 typedef enum
 {
     CWP_ITEM_MIN_RESERVED_EXT       = -128,
+    CWP_ITEM_TIMESTAMP              = -1,
     CWP_ITEM_MAX_RESERVED_EXT       = -1,
     CWP_ITEM_MIN_USER_EXT           = 0,
     CWP_ITEM_MAX_USER_EXT           = 127,
@@ -135,6 +145,7 @@ typedef struct {
         cwpack_blob     str;
         cwpack_blob     bin;
         cwpack_blob     ext;
+        struct timespec time;
     } as;
 } cwpack_item;
 
@@ -154,7 +165,7 @@ typedef struct cw_unpack_context {
 
 
 
-int cw_unpack_context_init (cw_unpack_context* unpack_context, void* data, unsigned long length, unpack_underflow_handler huu);
+int cw_unpack_context_init (cw_unpack_context* unpack_context, const void* data, unsigned long length, unpack_underflow_handler huu);
 
 void cw_unpack_next (cw_unpack_context* unpack_context);
 void cw_skip_items (cw_unpack_context* unpack_context, long item_count);
