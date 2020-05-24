@@ -43,10 +43,10 @@ id cwObjectFromBuffer (cw_unpack_context* inbuf);
     
     if (![[result class] isSubclassOfClass:self])
     {
-        if ([[result class] isSubclassOfClass:NSArray] && [self isSubclassOfClass:NSSet])
+        if ([[result class] isSubclassOfClass:[NSArray class]] && [self isSubclassOfClass:[NSSet class]])
             return [self setWithArray:result];
 
-        if ([[result class] isSubclassOfClass:NSNull])
+        if ([[result class] isSubclassOfClass:[NSNull class]])
             return nil;
 
         else
