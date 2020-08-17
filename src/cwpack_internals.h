@@ -213,7 +213,7 @@
 #ifndef FORCE_ALIGNMENT_64BIT
 #define cw_load64(ptr,dest)  dest = *(uint64_t*)ptr;
 #else
-#define cw_store64(x)  memcpy(p,&x,8);
+#define cw_load64(ptr,dest)  memcpy(&dest,ptr,8);
 #endif
 
 #else    /* Byte order little endian or undetermined */

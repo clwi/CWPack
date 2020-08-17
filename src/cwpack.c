@@ -380,19 +380,40 @@ void cw_pack_ext (cw_pack_context* pack_context, int8_t type, const void* v, uin
 }
 
 
-void cw_pack_time (cw_pack_context* pack_context, struct timespec* t)
+void cw_pack_time (cw_pack_context* pack_context, int64_t sec, uint32_t nsec)
 {
     if (pack_context->return_code)
         return;
-    
+
     if (pack_context->be_compatible)
         PACK_ERROR(CWP_RC_ILLEGAL_CALL);
 
+    if (nsec >= 1000000000)
+        PACK_ERROR(CWP_RC_VALUE_ERROR);
+
     uint8_t *p;
-    
-    if ((t->tv_sec >> 34) == 0) {
-        uint64_t data64 = (uint64_t)((t->tv_nsec << 34) | t->tv_sec);
-        if ((data64 & 0xffffffff00000000L) == 0) {
+
+    if ((uint64_t)sec & 0xfffffffc00000000L) {
+        // timestamp 96
+        //serialize(0xc7, 12, -1, nsec, sec)
+        cw_pack_reserve_space(15);
+        *p++ = (uint8_t)0xc7;
+        *p++ = (uint8_t)12;
+        *p++ = (uint8_t)0xff;
+        cw_store32(nsec); p += 4;
+        cw_store64(sec);
+    }
+    else {
+        uint64_t data64 = (((uint64_t)nsec << 34) | (uint64_t)sec);
+        if (data64 & 0xffffffff00000000L) {
+            // timestamp 64
+            //serialize(0xd7, -1, data64)
+            cw_pack_reserve_space(10);
+            *p++ = (uint8_t)0xd7;
+            *p++ = (uint8_t)0xff;
+            cw_store64(data64);
+        }
+        else {
             // timestamp 32
             uint32_t data32 = (uint32_t)data64;
             //serialize(0xd6, -1, data32)
@@ -401,24 +422,6 @@ void cw_pack_time (cw_pack_context* pack_context, struct timespec* t)
             *p++ = (uint8_t)0xff;
             cw_store32(data32);
         }
-        else {
-            // timestamp 64
-            //serialize(0xd7, -1, data64)
-            cw_pack_reserve_space(10);
-            *p++ = (uint8_t)0xd7;
-            *p++ = (uint8_t)0xff;
-            cw_store64(data64);
-        }
-    }
-    else {
-        // timestamp 96
-        //serialize(0xc7, 12, -1, t->tv_nsec, t->tv_sec)
-        cw_pack_reserve_space(3+12);
-        *p++ = (uint8_t)0xc7;
-        *p++ = (uint8_t)12;
-        *p++ = (uint8_t)0xff;
-        cw_store32(t->tv_nsec);
-        cw_store64(t->tv_sec);
     }
 }
 
@@ -523,9 +526,10 @@ void cw_unpack_next (cw_unpack_context* unpack_context)
                         {
                             cw_unpack_assert_space(4);
                             cw_load32(p);
-                            unpack_context->item.as.time.tv_nsec = (long)tmpu32;
+                            unpack_context->item.as.time.tv_nsec = tmpu32;
                             cw_unpack_assert_space(8);
-                            cw_load64(p,unpack_context->item.as.time.tv_sec);
+                            cw_load64(p,tmpu64);
+                            unpack_context->item.as.time.tv_sec = (int64_t)tmpu64;
                             return;
                         }
                         UNPACK_ERROR(CWP_RC_WRONG_TIMESTAMP_LENGTH)
@@ -731,7 +735,6 @@ void cw_skip_items (cw_unpack_context* unpack_context, long item_count)
                 UNPACK_ERROR(CWP_RC_MALFORMED_INPUT)
         }
     }
-    return;
 }
 
 /* end cwpack.c */

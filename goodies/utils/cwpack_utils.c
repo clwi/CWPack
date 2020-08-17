@@ -21,6 +21,7 @@
  */
 
 
+#include <math.h>
 #include "cwpack_utils.h"
 
 
@@ -56,10 +57,9 @@ void cw_pack_float_opt (cw_pack_context* pack_context, float f)
 
 void cw_pack_time_interval (cw_pack_context* pack_context, double ti)
 {
-    struct timespec ts;
-    ts.tv_sec = (long)ti;
-    ts.tv_nsec = (long)((ti - (double)ts.tv_sec) * 1000000000.0);
-    cw_pack_time(pack_context, &ts);
+    int64_t  sec = (int64_t)floor(ti);
+    uint32_t nsec = (uint32_t)((ti - (double)sec) * 1000000000.0);
+    cw_pack_time(pack_context, sec, nsec);
 }
 
 /*******************************   U N P A C K   ******************************/
@@ -337,7 +337,7 @@ unsigned int cw_unpack_next_str_lengh (cw_unpack_context* unpack_context)
         return unpack_context->item.as.str.length;
 
     unpack_context->return_code = CWP_RC_TYPE_ERROR;
-    return NaN;
+    return 0;
 }
 
 
