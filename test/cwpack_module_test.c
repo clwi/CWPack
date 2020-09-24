@@ -230,6 +230,7 @@ int main(int argc, const char * argv[])
     TESTP(unsigned,256,"cd0100");
     TESTP(unsigned,65535,"cdffff");
     TESTP(unsigned,65536,"ce00010000");
+    TESTP(unsigned,500000000,"ce1dcd6500");
     TESTP(unsigned,0xffffffffUL,"ceffffffff");
     TESTP(unsigned,0x100000000ULL,"cf0000000100000000");
     TESTP(unsigned,0xffffffffffffffffULL,"cfffffffffffffffff");
@@ -314,7 +315,17 @@ int main(int argc, const char * argv[])
     TESTP_EXT(ext,21,65535,"c8ffff15");
     TESTP_EXT(ext,21,65536,"c90001000015");
     
-    
+    pack_ctx.current = outbuffer;
+    cw_pack_time(&pack_ctx, 1, 0);
+    check_pack_result("d6ff00000001", 0);
+    pack_ctx.current = outbuffer;
+    cw_pack_time(&pack_ctx, 1, 2);
+    check_pack_result("d7ff0000000800000001", 0);
+    pack_ctx.current = outbuffer;
+    cw_pack_time(&pack_ctx, -1, 500000000);
+    check_pack_result("c70cff1dcd6500ffffffffffffffff", 0);
+
+    TESTP(time_interval,-0.5,"c70cff1dcd6500ffffffffffffffff");
     
     //*******************   TEST cwpack unpack   **********************
     
@@ -390,7 +401,14 @@ int main(int argc, const char * argv[])
     TESTUP_VAL("deffff",MAP,map.size,65535)
     TESTUP_VAL("df00010000",MAP,map.size,65536)
     
-    
+    // TESTUP timeStamp
+    TESTUP_VAL("d6ff00000001",TIMESTAMP,time.tv_sec,1);
+    TESTUP_VAL("d6ff00000001",TIMESTAMP,time.tv_nsec,0);
+    TESTUP_VAL("d7ff0000000800000001",TIMESTAMP,time.tv_sec,1);
+    TESTUP_VAL("d7ff0000000800000001",TIMESTAMP,time.tv_nsec,2);
+    TESTUP_VAL("c70cff1dcd6500ffffffffffffffff",TIMESTAMP,time.tv_sec,-1);
+    TESTUP_VAL("c70cff1dcd6500ffffffffffffffff",TIMESTAMP,time.tv_nsec,500000000);
+
 #define TESTUP_AREA(buffer,etype,blob,len)                 \
     blob_length = len;                                     \
     TESTUP_VAL(buffer,etype,blob.length,len)               \

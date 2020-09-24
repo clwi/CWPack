@@ -37,6 +37,9 @@ id cwObjectFromBuffer (cw_unpack_context* inbuf);
 }
 
 
++ (instancetype) setWithArray:(NSArray*)array {return nil;}
+
+
 + (instancetype) unpackFrom:(cw_unpack_context*) buff
 {
     id result = cwObjectFromBuffer(buff);
@@ -186,12 +189,8 @@ id cwObjectFromBuffer (cw_unpack_context* inbuf);
 
 - (void) packIn:(cw_pack_context*) buff
 {
-    struct timespec t;
-    
     NSTimeInterval ti = self.timeIntervalSince1970;
-    t.tv_sec = floor(ti);
-    t.tv_nsec = floor((ti - t.tv_sec)*1000000000);
-    cw_pack_time(buff, &t);
+    cw_pack_time_interval (buff, ti);
 }
 @end
 

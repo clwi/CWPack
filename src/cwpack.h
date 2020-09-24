@@ -90,7 +90,7 @@ void cw_pack_map_size (cw_pack_context* pack_context, uint32_t n);
 void cw_pack_str (cw_pack_context* pack_context, const char* v, uint32_t l);
 void cw_pack_bin (cw_pack_context* pack_context, const void* v, uint32_t l);
 void cw_pack_ext (cw_pack_context* pack_context, int8_t type, const void* v, uint32_t l);
-void cw_pack_time (cw_pack_context* pack_context, struct timespec* t);
+void cw_pack_time (cw_pack_context* pack_context, int64_t sec, uint32_t nsec);
 
 void cw_pack_insert (cw_pack_context* pack_context, const void* v, uint32_t l);
 
@@ -132,6 +132,12 @@ typedef struct {
 
 
 typedef struct {
+    int64_t     tv_sec;
+    uint32_t    tv_nsec;
+} cwpack_timespec;
+
+
+typedef struct {
     cwpack_item_types   type;
     union
     {
@@ -145,7 +151,7 @@ typedef struct {
         cwpack_blob     str;
         cwpack_blob     bin;
         cwpack_blob     ext;
-        struct timespec time;
+        cwpack_timespec time;
     } as;
 } cwpack_item;
 

@@ -34,7 +34,9 @@ void cw_pack_float_opt (cw_pack_context* pack_context, float f);    /* Pack as s
 void cw_pack_double_opt (cw_pack_context* pack_context, double d);  /* Pack as signed or float if precision isn't destroyed */
 #define  cw_pack_real cw_pack_double_opt                            /* Backward compatibility */
 
-void cw_pack_time_interval (cw_pack_context* pack_context, double ti);
+#define cw_pack_timespec (pack_contextptr, timespecptr) cw_pack_time ((pack_contextptr), (int64_t)((timespecptr)->tv_sec), (uint32_t)((timespecptr)->tv_nsec))
+
+void cw_pack_time_interval (cw_pack_context* pack_context, double ti); /* ti is seconds relative epoch */
 
 /*****************************   U N P A C K   ********************************/
 
