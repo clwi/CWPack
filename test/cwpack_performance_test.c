@@ -40,7 +40,7 @@ static double milliseconds(void) {
 
 #define BEFORE_PTEST(code) \
     cw_pack_context_init(&pc, buffer, BUF_Length, 0);\
-    cmp_init(&cc, buffer, 0, b_writer);\
+    cmp_init(&cc, buffer, 0, 0, b_writer);\
     mpack_writer_init(&mw, buffer, BUF_Length); \
     code; \
     itemSize = (int)(pc.current - pc.start); \
@@ -171,7 +171,7 @@ static void pack_test(void)
     unsigned int l = (unsigned int)(pc.current - pc.start); \
     cw_unpack_context_init (&uc, buffer, l, 0); \
     mpack_reader_init_data (&mr, buffer, l); \
-    cmp_init(&cc, buffer, b_reader, 0);\
+    cmp_init(&cc, buffer, b_reader, 0, 0);\
     printf("Buffer filled with: %-35s\n", #code); \
 }
 

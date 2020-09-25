@@ -12,4 +12,6 @@ The shell script `runModuleTest.sh` runs the module test. The test checks that i
 
 The performance test is run by the shell script `runPerformanceTest.sh`. The script assumes that the repositories for CWPack, MPack and CMP are side by side in the same folder.
 
+The performance test is targeted to CMP v19 and MPack v1.0.
+
 The performance test checks the duration of a number of calls by calling them 1.000.000 times.
