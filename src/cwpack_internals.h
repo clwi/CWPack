@@ -50,10 +50,10 @@
 
 #ifdef COMPILE_FOR_BIG_ENDIAN
 
-#define cw_store16(x)  *(uint16_t*)p = *(uint16_t*)&x;
-#define cw_store32(x)  *(uint32_t*)p = *(uint32_t*)&x;
+#define cw_store16(x)  *(uint16_t*)p = (uint16_t)x;
+#define cw_store32(x)  *(uint32_t*)p = (uint32_t)x;
 #ifndef FORCE_ALIGNMENT_64BIT
-#define cw_store64(x)  *(uint64_t*)p = *(uint64_t*)&x;
+#define cw_store64(x)  *(uint64_t*)p = (uint64_t)x;
 #else
 #define cw_store64(x)  memcpy(p,&x,8);
 #endif
