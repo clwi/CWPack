@@ -1,18 +1,18 @@
 /*      CWPack/goodies - basic_contexts.c   */
 /*
  The MIT License (MIT)
- 
+
  Copyright (c) 2017 Claes Wihlborg
- 
+
  Permission is hereby granted, free of charge, to any person obtaining a copy of this
  software and associated documentation files (the "Software"), to deal in the Software
  without restriction, including without limitation the rights to use, copy, modify,
  merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit
  persons to whom the Software is furnished to do so, subject to the following conditions:
- 
+
  The above copyright notice and this permission notice shall be included in all copies or
  substantial portions of the Software.
- 
+
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
  BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
@@ -44,7 +44,7 @@ static int handle_memory_pack_overflow(struct cw_pack_context* pc, unsigned long
     void *new_buffer = realloc (pc->start, buffer_length);
     if (!new_buffer)
         return CWP_RC_BUFFER_OVERFLOW;
-    
+
     pc->start = (uint8_t*)new_buffer;
     pc->current = pc->start + contains;
     pc->end = pc->start + buffer_length;
@@ -61,7 +61,7 @@ void init_dynamic_memory_pack_context (dynamic_memory_pack_context* dmpc, unsign
         dmpc->pc.return_code = CWP_RC_MALLOC_ERROR;
         return;
     }
-    
+
     cw_pack_context_init((cw_pack_context*)dmpc, buffer, buffer_length, &handle_memory_pack_overflow);
 }
 
@@ -106,11 +106,11 @@ static int handle_stream_pack_overflow(struct cw_pack_context* pc, unsigned long
     {
         while (buffer_length < more)
             buffer_length = 2 * buffer_length;
-        
+
         void *new_buffer = malloc (buffer_length);
         if (!new_buffer)
             return CWP_RC_BUFFER_OVERFLOW;
-        
+
         free(pc->start);
         pc->start = (uint8_t*)new_buffer;
         pc->end = pc->start + buffer_length;
@@ -130,7 +130,7 @@ void init_stream_pack_context (stream_pack_context* spc, unsigned long initial_b
         return;
     }
     spc->file = file;
-    
+
     cw_pack_context_init((cw_pack_context*)spc, buffer, buffer_length, &handle_stream_pack_overflow);
     cw_pack_set_flush_handler((cw_pack_context*)spc, &flush_stream_pack_context);
 }
@@ -158,16 +158,16 @@ static int handle_stream_unpack_underflow(struct cw_unpack_context* uc, unsigned
     {
         memmove (uc->start, uc->current, remains);
     }
-    
+
     if (suc->buffer_length < more)
     {
         while (suc->buffer_length < more)
             suc->buffer_length = 2 * suc->buffer_length;
-        
+
         void *new_buffer = realloc (uc->start, suc->buffer_length);
         if (!new_buffer)
             return CWP_RC_BUFFER_UNDERFLOW;
-        
+
         uc->start = (uint8_t*)new_buffer;
     }
     uc->current = uc->start;
@@ -180,7 +180,7 @@ static int handle_stream_unpack_underflow(struct cw_unpack_context* uc, unsigned
         suc->uc.err_no = ferror(suc->file);
         return CWP_RC_ERROR_IN_HANDLER;
     }
-    
+
     uc->end += l;
 
     return CWP_RC_OK;
@@ -198,7 +198,7 @@ void init_stream_unpack_context (stream_unpack_context* suc, unsigned long initi
     }
     suc->file = file;
     suc->buffer_length = buffer_length;
-    
+
     cw_unpack_context_init((cw_unpack_context*)suc, buffer, 0, &handle_stream_unpack_underflow);
 }
 
@@ -239,7 +239,7 @@ static int flush_file_pack_context(struct cw_pack_context* pc)
     }
     else
         fpc->pc.current = fpc->pc.start;
-    
+
     return CWP_RC_OK;
 }
 
@@ -249,7 +249,7 @@ static int handle_file_pack_overflow(struct cw_pack_context* pc, unsigned long m
     int rc = flush_file_pack_context(pc);
     if (rc != CWP_RC_OK)
         return rc;
-    
+
     uint8_t *bStart = fpc->barrier ? fpc->barrier : pc->current;
     unsigned long kept = (unsigned long)(pc->current - bStart);
     unsigned long buffer_length = (unsigned long)(pc->end - pc->start);
@@ -257,7 +257,7 @@ static int handle_file_pack_overflow(struct cw_pack_context* pc, unsigned long m
     {
         while (buffer_length < more + kept)
             buffer_length = 2 * buffer_length;
-        
+
         void *new_buffer = malloc (buffer_length);
         if (!new_buffer)
             return CWP_RC_BUFFER_OVERFLOW;
@@ -271,12 +271,12 @@ static int handle_file_pack_overflow(struct cw_pack_context* pc, unsigned long m
     {
         memcpy(pc->start, bStart, kept);
     }
-    
+
     if (fpc->barrier)
     {
         fpc->barrier = pc->start;
     }
-    
+
     pc->current = pc->start + kept;
     return CWP_RC_OK;
 }
@@ -294,7 +294,7 @@ void init_file_pack_context (file_pack_context* fpc, unsigned long initial_buffe
     fpc->fileDescriptor = fileDescriptor;
     fpc->fileDescriptor = fileDescriptor;
     fpc->barrier = NULL;
-    
+
     cw_pack_context_init((cw_pack_context*)fpc, buffer, buffer_length, &handle_file_pack_overflow);
     cw_pack_set_flush_handler((cw_pack_context*)fpc, &flush_file_pack_context);
 }
@@ -317,7 +317,7 @@ void terminate_file_pack_context(file_pack_context* fpc)
     fpc->barrier = NULL;
     cw_pack_context* pc = (cw_pack_context*)fpc;
     cw_pack_flush(pc);
-    
+
     if (pc->return_code != CWP_RC_MALLOC_ERROR)
         free(pc->start);
 }
@@ -337,16 +337,16 @@ static int handle_file_unpack_underflow(struct cw_unpack_context* uc, unsigned l
     {
         memcpy (uc->start, bStart, remains);
     }
-    
+
     if (auc->buffer_length < more + kept)
     {
         while (auc->buffer_length < more + kept)
             auc->buffer_length = 2 * auc->buffer_length;
-        
+
         void *new_buffer = realloc (uc->start, auc->buffer_length);
         if (!new_buffer)
             return CWP_RC_BUFFER_UNDERFLOW;
-        
+
         uc->start = (uint8_t*)new_buffer;
     }
     uc->current = uc->start + kept;
@@ -368,7 +368,7 @@ static int handle_file_unpack_underflow(struct cw_unpack_context* uc, unsigned l
         }
         uc->end += l;
     }
-    
+
     return CWP_RC_OK;
 }
 
@@ -385,7 +385,7 @@ void init_file_unpack_context (file_unpack_context* fuc, unsigned long initial_b
     fuc->fileDescriptor = fileDescriptor;
     fuc->barrier = NULL;
     fuc->buffer_length = buffer_length;
-    
+
     cw_unpack_context_init((cw_unpack_context*)fuc, buffer, 0, &handle_file_unpack_underflow);
 }
 

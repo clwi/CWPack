@@ -1,18 +1,18 @@
 /*      CWPack/goodies - cwpack_utils.c   */
 /*
  The MIT License (MIT)
- 
+
  Copyright (c) 2017 Claes Wihlborg
- 
+
  Permission is hereby granted, free of charge, to any person obtaining a copy of this
  software and associated documentation files (the "Software"), to deal in the Software
  without restriction, including without limitation the rights to use, copy, modify,
  merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit
  persons to whom the Software is furnished to do so, subject to the following conditions:
- 
+
  The above copyright notice and this permission notice shall be included in all copies or
  substantial portions of the Software.
- 
+
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
  BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
@@ -70,7 +70,7 @@ float cw_unpack_next_float (cw_unpack_context* unpack_context)
 {
     cw_unpack_next (unpack_context);
     if (unpack_context->return_code)        return NaN;
-    
+
     switch (unpack_context->item.type) {
         case CWP_ITEM_POSITIVE_INTEGER:     return unpack_context->item.as.u64;
         case CWP_ITEM_NEGATIVE_INTEGER:     return unpack_context->item.as.i64;
@@ -85,7 +85,7 @@ double cw_unpack_next_double (cw_unpack_context* unpack_context)
 {
     cw_unpack_next (unpack_context);
     if (unpack_context->return_code)        return NaN;
-    
+
     switch (unpack_context->item.type) {
         case CWP_ITEM_POSITIVE_INTEGER:     return unpack_context->item.as.u64;
         case CWP_ITEM_NEGATIVE_INTEGER:     return unpack_context->item.as.i64;
@@ -101,10 +101,10 @@ bool cw_unpack_next_boolean (cw_unpack_context* unpack_context)
     cw_unpack_next (unpack_context);
     if (unpack_context->return_code)
         return false;
-    
+
     if (unpack_context->item.type == CWP_ITEM_BOOLEAN)
         return unpack_context->item.as.boolean;
-    
+
     unpack_context->return_code = CWP_RC_TYPE_ERROR;
     return false;
 }
@@ -115,7 +115,7 @@ int64_t cw_unpack_next_signed64 (cw_unpack_context* unpack_context)
     cw_unpack_next (unpack_context);
     if (unpack_context->return_code)
         return 0;
-    
+
     if (unpack_context->item.type == CWP_ITEM_POSITIVE_INTEGER)
     {
         if (unpack_context->item.as.u64 <= INT64_MAX)
@@ -126,10 +126,10 @@ int64_t cw_unpack_next_signed64 (cw_unpack_context* unpack_context)
             return 0;
         }
     }
-    
+
     if (unpack_context->item.type == CWP_ITEM_NEGATIVE_INTEGER)
         return unpack_context->item.as.i64;
-    
+
     unpack_context->return_code = CWP_RC_TYPE_ERROR;
     return 0;
 }
@@ -140,7 +140,7 @@ int32_t cw_unpack_next_signed32 (cw_unpack_context* unpack_context)
     cw_unpack_next (unpack_context);
     if (unpack_context->return_code)
         return 0;
-    
+
     if (unpack_context->item.type == CWP_ITEM_POSITIVE_INTEGER)
     {
         if (unpack_context->item.as.u64 <= INT32_MAX)
@@ -161,7 +161,7 @@ int32_t cw_unpack_next_signed32 (cw_unpack_context* unpack_context)
             return 0;
         }
     }
-    
+
     unpack_context->return_code = CWP_RC_TYPE_ERROR;
     return 0;
 }
@@ -172,7 +172,7 @@ int16_t cw_unpack_next_signed16 (cw_unpack_context* unpack_context)
     cw_unpack_next (unpack_context);
     if (unpack_context->return_code)
         return 0;
-    
+
     if (unpack_context->item.type == CWP_ITEM_POSITIVE_INTEGER)
     {
         if (unpack_context->item.as.u64 <= INT16_MAX)
@@ -193,7 +193,7 @@ int16_t cw_unpack_next_signed16 (cw_unpack_context* unpack_context)
             return 0;
         }
     }
-    
+
     unpack_context->return_code = CWP_RC_TYPE_ERROR;
     return 0;
 }
@@ -204,7 +204,7 @@ int8_t cw_unpack_next_signed8 (cw_unpack_context* unpack_context)
     cw_unpack_next (unpack_context);
     if (unpack_context->return_code)
         return 0;
-    
+
     if (unpack_context->item.type == CWP_ITEM_POSITIVE_INTEGER)
     {
         if (unpack_context->item.as.u64 <= INT8_MAX)
@@ -225,7 +225,7 @@ int8_t cw_unpack_next_signed8 (cw_unpack_context* unpack_context)
             return 0;
         }
     }
-    
+
     unpack_context->return_code = CWP_RC_TYPE_ERROR;
     return 0;
 }
@@ -237,12 +237,12 @@ uint64_t cw_unpack_next_unsigned64 (cw_unpack_context* unpack_context)
     cw_unpack_next (unpack_context);
     if (unpack_context->return_code)
         return 0;
-    
+
     if (unpack_context->item.type == CWP_ITEM_POSITIVE_INTEGER)
     {
         return unpack_context->item.as.u64;
     }
-    
+
     unpack_context->return_code = CWP_RC_TYPE_ERROR;
     return 0;
 }
@@ -253,7 +253,7 @@ uint32_t cw_unpack_next_unsigned32 (cw_unpack_context* unpack_context)
     cw_unpack_next (unpack_context);
     if (unpack_context->return_code)
         return 0;
-    
+
     if (unpack_context->item.type == CWP_ITEM_POSITIVE_INTEGER)
     {
         if (unpack_context->item.as.u64 <= UINT32_MAX)
@@ -264,7 +264,7 @@ uint32_t cw_unpack_next_unsigned32 (cw_unpack_context* unpack_context)
             return 0;
         }
     }
-    
+
     unpack_context->return_code = CWP_RC_TYPE_ERROR;
     return 0;
 }
@@ -275,7 +275,7 @@ uint16_t cw_unpack_next_unsigned16 (cw_unpack_context* unpack_context)
     cw_unpack_next (unpack_context);
     if (unpack_context->return_code)
         return 0;
-    
+
     if (unpack_context->item.type == CWP_ITEM_POSITIVE_INTEGER)
     {
         if (unpack_context->item.as.u64 <= UINT16_MAX)
@@ -286,7 +286,7 @@ uint16_t cw_unpack_next_unsigned16 (cw_unpack_context* unpack_context)
             return 0;
         }
     }
-    
+
     unpack_context->return_code = CWP_RC_TYPE_ERROR;
     return 0;
 }
@@ -297,7 +297,7 @@ uint8_t cw_unpack_next_unsigned8 (cw_unpack_context* unpack_context)
     cw_unpack_next (unpack_context);
     if (unpack_context->return_code)
         return 0;
-    
+
     if (unpack_context->item.type == CWP_ITEM_POSITIVE_INTEGER)
     {
         if (unpack_context->item.as.u64 <= UINT8_MAX)
@@ -308,7 +308,7 @@ uint8_t cw_unpack_next_unsigned8 (cw_unpack_context* unpack_context)
             return 0;
         }
     }
-    
+
     unpack_context->return_code = CWP_RC_TYPE_ERROR;
     return 0;
 }
@@ -318,7 +318,7 @@ double cw_unpack_next_time_interval (cw_unpack_context* unpack_context)
 {
     cw_unpack_next (unpack_context);
     if (unpack_context->return_code)        return NaN;
-    
+
     if (unpack_context->item.type == CWP_ITEM_TIMESTAMP)
     {
         return (double)unpack_context->item.as.time.tv_sec + (double)unpack_context->item.as.time.tv_nsec/1000000000;
