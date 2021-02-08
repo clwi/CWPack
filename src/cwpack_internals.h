@@ -337,8 +337,8 @@
 
 #define getDDItemFix(len)                                                   \
     cw_unpack_assert_space(len+1);                                          \
-    unpack_context->item.type = *(int8_t*)p++;                              \
-    if (unpack_context->item.type == CWP_ITEM_TIMESTAMP)                     \
+    unpack_context->item.type = (cwpack_item_types)*(int8_t*)p++;           \
+    if (unpack_context->item.type == CWP_ITEM_TIMESTAMP)                    \
     {                                                                       \
         if (len == 4)                                                       \
         {                                                                   \
