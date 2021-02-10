@@ -30,18 +30,18 @@
 #define NUMEXT_ERROR_NOT_EXT        CWP_RC_TYPE_ERROR;
 #define NUMEXT_ERROR_WRONG_LENGTH   CWP_RC_VALUE_ERROR;
 
-    
-    
-    
+
+
+
     void cw_pack_ext_integer (cw_pack_context* pack_context, int8_t type, int64_t i);
     void cw_pack_ext_float (cw_pack_context* pack_context, int8_t type, float f);
     void cw_pack_ext_double (cw_pack_context* pack_context, int8_t type, double d);
 
-    
+
     int64_t get_ext_integer (cw_unpack_context* unpack_context);
     float get_ext_float (cw_unpack_context* unpack_context);
     double get_ext_double (cw_unpack_context* unpack_context);
 
-    
+
 
 #endif /* numeric_extensions_h */

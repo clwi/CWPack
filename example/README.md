@@ -4,7 +4,7 @@ The example contains a program that takes a json file and converts it to a messa
 
 In the script runExample.sh the 2 json files are also diffed.
 
-The files `item.*` contains a memory tree representation of json data and the conversion routines:  
+The files `item.*` contains a memory tree representation of json data and the conversion routines:
 
 - Item Tree To Json File
 - Item Tree To MessagePack File

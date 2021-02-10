@@ -1,7 +1,7 @@
 # CWPack / Goodies / ObjC
 
 
-ObjC contains a wrapper for objective-C in the form of a category to NSObject.  
+ObjC contains a wrapper for objective-C in the form of a category to NSObject.
 The category contains two methods:
 
 ```C

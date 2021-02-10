@@ -59,7 +59,7 @@ static char char2hex (char c)
         return c - '0';
     if (c <= 'F')
         return c - 'A' + 10;
-    
+
     return c - 'a' + 10;
 }
 
@@ -70,7 +70,7 @@ static void check_pack_result(const char* expected_header, unsigned long data_le
     unsigned long header_length = strlen(expected_header) / 2;
     if (pack_ctx.current - outbuffer == (long)(header_length + data_length))
     {
-        
+
         if (header_length*2 == strlen(expected_header))
         {
             unsigned long i;
@@ -102,14 +102,14 @@ static void check_pack_result(const char* expected_header, unsigned long data_le
                     hex <<= 4;
                     hex += (uc - 'A' + 10);
                 }
-                
-                
+
+
                 if (*p++ != hex)
                 {
                     ERROR("Different header value");
                 }
             }
-            
+
             if (data_length > 0)
             {
                 ucp = TEST_area;
@@ -133,18 +133,18 @@ int main(int argc, const char * argv[])
 {
     printf("CWPack numeric extensions test started.\n");
     error_count = 0;
-    
+
     bool endian_switch_found = false;
 #ifdef COMPILE_FOR_BIG_ENDIAN
     printf("Compiled for big endian.\n\n");
     endian_switch_found = true;
 #endif
-    
+
 #ifdef COMPILE_FOR_LITTLE_ENDIAN
     printf("Compiled for little endian.\n\n");
     endian_switch_found = true;
 #endif
-    
+
     if (!endian_switch_found)
     {
         printf("Compiled for all endians.\n");
@@ -154,51 +154,51 @@ int main(int argc, const char * argv[])
             case 0x31323334UL:
                 printf("Running on big endian hardware.\n\n");
                 break;
-                
+
             case 0x34333231UL:
                 printf("Running on little endian hardware.\n\n");
                 break;
-                
+
             default:
                 printf("Running on neither little nor big endian hardware.\n\n");
                 break;
         }
     }
-    
-    
+
+
     //*******************   TEST numeric extensions  ****************************
-    
+
     cw_pack_context_init (&pack_ctx, outbuffer, 70000, 0);
     if (pack_ctx.return_code == CWP_RC_WRONG_BYTE_ORDER)
     {
         ERROR("***** Compiled for wrong byte order, test terminated *****\n\n");
         exit(1);
     }
-    
-        
-    
-    
+
+
+
+
 #define TESTP_EXT(call,type,value,header)           \
     pack_ctx.current = outbuffer;                   \
     cw_pack_ext_##call (&pack_ctx, type, value);    \
     if(pack_ctx.return_code)                        \
         ERROR("In pack");                           \
     check_pack_result(header, 0)
-    
+
     // TESTP ext
     TESTP_EXT(integer,15,1,"d40f01");
     TESTP_EXT(integer,15,128,"d50f0080");
     TESTP_EXT(integer,15,-32769,"d60fffff7fff");
-    
+
     float f1 = (float)3.14;
     TESTP_EXT(float,15,f1,"d60f4048f5c3");
     TESTP_EXT(double,15,f1,"d70f40091eb860000000");
-    
+
     int64_t integer_var;
     float float_var;
     double double_var;
     char inputbuf[30];
-    
+
 #define TESTUP_EXT(buffer,etype,call,value)                                                 \
 {                                                                                           \
     unsigned long ui;                                                                       \
@@ -217,30 +217,30 @@ int main(int argc, const char * argv[])
     if (call##_var != value)                                                                \
         ERROR("In unpack, value error");                                                    \
 }
-    
+
     TESTUP_EXT("d40f01",15,integer,1);
     TESTUP_EXT("d50f0080",15,integer,128);
     TESTUP_EXT("d60fffff7fff",15,integer,-32769);
     TESTUP_EXT("d60f4048f5c3",15,float,f1);
     TESTUP_EXT("d70f40091eb860000000",15,double,(double)f1);
     //*************************************************************
-    
+
     printf("CWPack numeric extensions test completed, ");
     switch (error_count)
     {
         case 0:
             printf("no errors detected\n");
             break;
-            
+
         case 1:
             printf("1 error detected\n");
             break;
-            
+
         default:
             printf("%d errors detected\n", error_count);
             break;
     }
-    
+
     return error_count;
 }
 
