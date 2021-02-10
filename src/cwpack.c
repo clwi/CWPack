@@ -1,18 +1,18 @@
 /*      CWPack - cwpack.c   */
 /*
  The MIT License (MIT)
- 
+
  Copyright (c) 2017 Claes Wihlborg
- 
+
  Permission is hereby granted, free of charge, to any person obtaining a copy of this
  software and associated documentation files (the "Software"), to deal in the Software
  without restriction, including without limitation the rights to use, copy, modify,
  merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit
  persons to whom the Software is furnished to do so, subject to the following conditions:
- 
+
  The above copyright notice and this permission notice shall be included in all copies or
  substantial portions of the Software.
- 
+
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
  BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
@@ -103,7 +103,7 @@ void cw_pack_unsigned(cw_pack_context* pack_context, uint64_t i)
 {
     if (pack_context->return_code)
         return;
-    
+
     if (i < 128)
         tryMove0(i);
 
@@ -125,27 +125,27 @@ void cw_pack_signed(cw_pack_context* pack_context, int64_t i)
 {
     if (pack_context->return_code)
         return;
-    
+
     if (i >127)
     {
         if (i < 256)
             tryMove1(0xcc, i);
-        
+
         if (i < 0x10000L)
             tryMove2(0xcd, i);
-        
+
         if (i < 0x100000000LL)
             tryMove4(0xce, i);
-        
+
         tryMove8(0xcf,i);
     }
-    
+
     if (i >= -32)
         tryMove0(i);
 
     if (i >= -128)
         tryMove1(0xd0, i);
-    
+
     if (i >= -32768)
         tryMove2(0xd1,i);
 
@@ -160,7 +160,7 @@ void cw_pack_float(cw_pack_context* pack_context, float f)
 {
     if (pack_context->return_code)
         return;
-    
+
     uint32_t tmp = *((uint32_t*)&f);
     tryMove4(0xca,tmp);
 }
@@ -170,7 +170,7 @@ void cw_pack_double(cw_pack_context* pack_context, double d)
 {
     if (pack_context->return_code)
         return;
-    
+
     uint64_t tmp = *((uint64_t*)&d);
     tryMove8(0xcb,tmp);
 }
@@ -189,7 +189,7 @@ void cw_pack_true (cw_pack_context* pack_context)
 {
     if (pack_context->return_code)
         return;
-    
+
     tryMove0(0xc3);
 }
 
@@ -198,7 +198,7 @@ void cw_pack_false (cw_pack_context* pack_context)
 {
     if (pack_context->return_code)
         return;
-    
+
     tryMove0(0xc2);
 }
 
@@ -207,7 +207,7 @@ void cw_pack_boolean(cw_pack_context* pack_context, bool b)
 {
     if (pack_context->return_code)
         return;
-    
+
     tryMove0(b? 0xc3: 0xc2);
 }
 
@@ -216,7 +216,7 @@ void cw_pack_array_size(cw_pack_context* pack_context, uint32_t n)
 {
     if (pack_context->return_code)
         return;
-    
+
     if (n < 16)
         tryMove0(0x90 | n);
 
@@ -231,7 +231,7 @@ void cw_pack_map_size(cw_pack_context* pack_context, uint32_t n)
 {
     if (pack_context->return_code)
         return;
-    
+
     if (n < 16)
         tryMove0(0x80 | n);
 
@@ -246,9 +246,9 @@ void cw_pack_str(cw_pack_context* pack_context, const char* v, uint32_t l)
 {
     if (pack_context->return_code)
         return;
-    
+
     uint8_t *p;
-    
+
     if (l < 32)             // Fixstr
     {
         cw_pack_reserve_space(l+1);
@@ -285,15 +285,15 @@ void cw_pack_bin(cw_pack_context* pack_context, const void* v, uint32_t l)
 {
     if (pack_context->return_code)
         return;
-    
+
     if (pack_context->be_compatible)
     {
         cw_pack_str( pack_context, v, l);
         return;
     }
-    
+
     uint8_t *p;
-    
+
     if (l < 256)            // Bin 8
     {
         cw_pack_reserve_space(l+2);
@@ -323,12 +323,12 @@ void cw_pack_ext (cw_pack_context* pack_context, int8_t type, const void* v, uin
 {
     if (pack_context->return_code)
         return;
-    
+
     if (pack_context->be_compatible)
         PACK_ERROR(CWP_RC_ILLEGAL_CALL);
-    
+
     uint8_t *p;
-    
+
     switch (l)
     {
         case 1:                                         // Fixext 1
@@ -471,7 +471,7 @@ void cw_unpack_next (cw_unpack_context* unpack_context)
     uint32_t    tmpu32;
     uint16_t    tmpu16;
     uint8_t*    p;
-    
+
 #define buffer_end_return_code  CWP_RC_END_OF_INPUT;
     cw_unpack_assert_space(1);
     uint8_t c = *p;
@@ -591,7 +591,6 @@ void cw_unpack_next (cw_unpack_context* unpack_context)
         default:
                     UNPACK_ERROR(CWP_RC_MALFORMED_INPUT)
     }
-    
 }
 
 #define cw_skip_bytes(n)                                \
@@ -602,11 +601,11 @@ void cw_skip_items (cw_unpack_context* unpack_context, long item_count)
 {
     if (unpack_context->return_code)
         return;
-    
+
     uint32_t    tmpu32;
     uint16_t    tmpu16;
     uint8_t*    p;
-    
+
     while (item_count-- > 0)
     {
 #undef buffer_end_return_code
@@ -668,19 +667,19 @@ void cw_skip_items (cw_unpack_context* unpack_context, long item_count)
                 cw_unpack_assert_space(1);
                 tmpu32 = *p;
                 cw_skip_bytes(tmpu32);
-                
+
             case 0xda:                                          // str 16
             case 0xc5:                                          // bin 16
                 cw_unpack_assert_space(2);
                 cw_load16(p);
                 cw_skip_bytes(tmpu16);
-                
+
             case 0xdb:                                          // str 32
             case 0xc6:                                          // bin 32
                 cw_unpack_assert_space(4);
                 cw_load32(p);
                 cw_skip_bytes(tmpu32);
-                
+
             case 0x80: case 0x81: case 0x82: case 0x83: case 0x84: case 0x85: case 0x86: case 0x87:
             case 0x88: case 0x89: case 0x8a: case 0x8b: case 0x8c: case 0x8d: case 0x8e: case 0x8f:
                 item_count += 2*(c & 15);                       // FixMap
@@ -690,46 +689,46 @@ void cw_skip_items (cw_unpack_context* unpack_context, long item_count)
             case 0x98: case 0x99: case 0x9a: case 0x9b: case 0x9c: case 0x9d: case 0x9e: case 0x9f:
                 item_count += c & 15;                           // FixArray
                 break;
-                
+
             case 0xdc:                                          // array 16
                 cw_unpack_assert_space(2);
                 cw_load16(p);
                 item_count += tmpu16;
                 break;
-                
+
             case 0xde:                                          // map 16
                 cw_unpack_assert_space(2);
                 cw_load16(p);
                 item_count += 2*tmpu16;
                 break;
-                
+
             case 0xdd:                                          // array 32
                 cw_unpack_assert_space(4);
                 cw_load32(p);
                 item_count += tmpu32;
                 break;
-                
+
             case 0xdf:                                          // map 32
                 cw_unpack_assert_space(4);
                 cw_load32(p);
                 item_count += 2*tmpu32;
                 break;
-                
+
             case 0xc7:                                          // ext 8
                 cw_unpack_assert_space(1);
                 tmpu32 = *p;
                 cw_skip_bytes(tmpu32 +1);
-                
+
             case 0xc8:                                          // ext 16
                 cw_unpack_assert_space(2);
                 cw_load16(p);
                 cw_skip_bytes(tmpu16 +1);
-                
+
             case 0xc9:                                          // ext 32
                 cw_unpack_assert_space(4);
                 cw_load32(p);
                 cw_skip_bytes(tmpu32 +1);
-                
+
             default:                                            // illegal
                 UNPACK_ERROR(CWP_RC_MALFORMED_INPUT)
         }

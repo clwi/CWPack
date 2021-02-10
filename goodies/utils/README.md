@@ -3,7 +3,7 @@
 
 Utils contains some convenience routines:
 
-### C string packing 
+### C string packing
 ```C
 void cw_pack_cstr (cw_pack_context* pack_context, const char* v);
 ```

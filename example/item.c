@@ -1,18 +1,18 @@
 /*      CWPack/example - item.c   */
 /*
  The MIT License (MIT)
- 
+
  Copyright (c) 2017 Claes Wihlborg
- 
+
  Permission is hereby granted, free of charge, to any person obtaining a copy of this
  software and associated documentation files (the "Software"), to deal in the Software
  without restriction, including without limitation the rights to use, copy, modify,
  merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit
  persons to whom the Software is furnished to do so, subject to the following conditions:
- 
+
  The above copyright notice and this permission notice shall be included in all copies or
  substantial portions of the Software.
- 
+
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
  BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
@@ -44,7 +44,7 @@ void freeItem3 (item_root* root)
             {
                 freeItem3(ic->items[i]);
             }
-            
+
         default:
             free(root);
     }
@@ -62,7 +62,7 @@ static void item32jsonFile (FILE* file, item_root* item)
     char c;
     unsigned u, ti;
     static unsigned tabs = 0;
-    
+
 #define NEW_LINE {fprintf (file, "\n"); for (ti=0; ti<tabs; ti++) fprintf (file, "\t");}
 
     switch (item->item_type)
@@ -83,7 +83,7 @@ static void item32jsonFile (FILE* file, item_root* item)
             NEW_LINE
             fprintf (file, "}");
             break;
-            
+
         case ITEM_ARRAY:
             jc = (item_container*)item;
             fprintf (file, "[");
@@ -98,23 +98,23 @@ static void item32jsonFile (FILE* file, item_root* item)
             NEW_LINE
             fprintf(file, "]");
             break;
-            
+
         case ITEM_NIL:
             fprintf (file, "null");
             break;
-            
+
         case ITEM_TRUE:
             fprintf (file, "true");
             break;
-            
+
         case ITEM_FALSE:
             fprintf (file, "false");
             break;
-            
+
         case ITEM_INTEGER:
             fprintf (file, "%lld", ((item_integer*)item)->value);
             break;
-            
+
         case ITEM_REAL:
             sprintf (tmp, "%-25.15g", ((item_real*)item)->value);
             for (i=0;i<30;i++)
@@ -129,7 +129,7 @@ static void item32jsonFile (FILE* file, item_root* item)
             }
             fprintf (file, "%s", tmp);
             break;
-            
+
         case ITEM_STRING:
             fprintf (file, "\"");
             cp = ((item_string*)item)->string;
@@ -161,7 +161,7 @@ static void item32jsonFile (FILE* file, item_root* item)
                         case 0x0a: fprintf (file, "\\n");   break; /* LF */
                         case 0x0c: fprintf (file, "\\f");   break; /* FF */
                         case 0x0d: fprintf (file, "\\r");   break; /* CR */
-                            
+
                         default:
                             fprintf (file, "%c", c);
                             break;
@@ -169,7 +169,7 @@ static void item32jsonFile (FILE* file, item_root* item)
             }
             fprintf (file, "\"");
             break;
-            
+
         default:    break;
     }
 }
@@ -299,7 +299,7 @@ static item_root* jsonString2item3 (const char** ptr)
 {
     scanSpace;
     item_root* result = NULL;
-    
+
     char c = *(*ptr)++;
     switch (c) {
         case '{':
@@ -309,7 +309,7 @@ static item_root* jsonString2item3 (const char** ptr)
             else
                 result = (item_root*)pullMapPair (ptr, 0);
             break;
-            
+
         case '[':
             scanSpace;
             if (**ptr == ']')
@@ -317,12 +317,12 @@ static item_root* jsonString2item3 (const char** ptr)
             else
                 result = (item_root*)pullArray (ptr, 0);
             break;
-            
+
         case '"':   result = (item_root*)pullString (ptr, 0);break;
         case 'n':   result = allocate_item(item_root,ITEM_NIL,0); *ptr+=3;break;
         case 't':   result = allocate_item(item_root,ITEM_TRUE,0); *ptr+=3;break;
         case 'f':   result = allocate_item(item_root,ITEM_FALSE,0); *ptr+=4;break;
-            
+
         case '-':
         case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9':
         {
@@ -355,11 +355,11 @@ static item_root* jsonString2item3 (const char** ptr)
             }
         }
             break;
-            
+
         default:
             break;
     }
-    
+
     return result;
 }
 
@@ -369,7 +369,7 @@ item_root* jsonFile2item3 (FILE* file)
     fseek (file, 0, SEEK_END);
     long length = ftell(file);
     char* buffer = malloc (length+1);
-    
+
     fseek (file, 0l, SEEK_SET);
     fread (buffer, 1, length, file);
     buffer[length] = 0;
@@ -387,7 +387,7 @@ static void item32packContext(cw_pack_context* pc, item_root* item)
     int    i;
     item_container* ic;
     char* cp;
-    
+
     switch (item->item_type)
     {
         case ITEM_MAP:
@@ -396,39 +396,39 @@ static void item32packContext(cw_pack_context* pc, item_root* item)
             for( i=0; i< ic->count; i++)
                 item32packContext (pc, ic->items[i]);
             break;
-            
+
         case ITEM_ARRAY:
             ic = (item_container*)item;
             cw_pack_array_size(pc, ic->count);
             for( i=0; i< ic->count; i++)
                 item32packContext (pc, ic->items[i]);
             break;
-                        
+
         case ITEM_NIL:
             cw_pack_nil (pc);
             break;
-            
+
         case ITEM_TRUE:
             cw_pack_boolean(pc, true);
             break;
-            
+
         case ITEM_FALSE:
             cw_pack_boolean(pc, false);
             break;
-            
+
         case ITEM_INTEGER:
             cw_pack_signed(pc, ((item_integer*)item)->value);
             break;
-            
+
         case ITEM_REAL:
             cw_pack_double(pc, ((item_real*)item)->value);
             break;
-            
+
         case ITEM_STRING:
             cp = ((item_string*)item)->string;
             cw_pack_str(pc, cp, (unsigned)strlen(cp));
             break;
-            
+
         default:    break;
     }
 }
@@ -457,7 +457,7 @@ static item_root* packContext2item3 (cw_unpack_context* uc)
         case CWP_ITEM_NIL:
             result = allocate_item(item_root,ITEM_NIL,0);
             break;
-            
+
         case CWP_ITEM_BOOLEAN:
             if (uc->item.as.boolean)
             {
@@ -474,23 +474,23 @@ static item_root* packContext2item3 (cw_unpack_context* uc)
             result = (item_root*)allocate_item(item_integer,ITEM_INTEGER,0);
             ((item_integer*)result)->value = uc->item.as.i64;
             break;
-            
+
         case CWP_ITEM_FLOAT:
             result = (item_root*)allocate_item(item_real,ITEM_REAL,0);
             ((item_real*)result)->value = uc->item.as.real;
             break;
-            
+
         case CWP_ITEM_DOUBLE:
             result = (item_root*)allocate_item(item_real,ITEM_REAL,0);
             ((item_real*)result)->value = uc->item.as.long_real;
             break;
-            
+
         case CWP_ITEM_STR:
             result = (item_root*)allocate_item(item_string,ITEM_STRING,uc->item.as.str.length + 1);
             strncpy(((item_string*)result)->string, (const char*)uc->item.as.str.start, uc->item.as.str.length);
             ((item_string*)result)->string[uc->item.as.str.length] = 0;
             break;
-            
+
         case CWP_ITEM_MAP:
             dim = 2 * uc->item.as.map.size;
             ic = allocate_container(ITEM_MAP, dim);
@@ -500,7 +500,7 @@ static item_root* packContext2item3 (cw_unpack_context* uc)
             }
             result = (item_root*)ic;
             break;
-            
+
         case CWP_ITEM_ARRAY:
             dim = uc->item.as.array.size;
             ic = allocate_container(ITEM_ARRAY, dim);
@@ -510,7 +510,7 @@ static item_root* packContext2item3 (cw_unpack_context* uc)
             }
             result = (item_root*)ic;
             break;
-            
+
         default:
             result = NULL;
             break;

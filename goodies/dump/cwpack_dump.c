@@ -1,18 +1,18 @@
 /*      CWPack/goodies - cwpack_dump.c   */
 /*
  The MIT License (MIT)
- 
+
  Copyright (c) 2017 Claes Wihlborg
- 
+
  Permission is hereby granted, free of charge, to any person obtaining a copy of this
  software and associated documentation files (the "Software"), to deal in the Software
  without restriction, including without limitation the rights to use, copy, modify,
  merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit
  persons to whom the Software is furnished to do so, subject to the following conditions:
- 
+
  The above copyright notice and this permission notice shall be included in all copies or
  substantial portions of the Software.
- 
+
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
  BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
@@ -47,7 +47,7 @@ static void dump_as_hex(const void* area, long length)
 
 static void dump_next_item( cw_unpack_context* context, int tabLevel)
 {
-    
+
     long long dim =99;
     int i,ti;
     double d;
@@ -63,32 +63,32 @@ static void dump_next_item( cw_unpack_context* context, int tabLevel)
         case CWP_ITEM_NIL:
             printf("null");
             break;
-            
+
         case CWP_ITEM_BOOLEAN:
             if (context->item.as.boolean)
                 printf("true");
             else
                 printf("false");
             break;
-            
+
         case CWP_ITEM_POSITIVE_INTEGER:
             printf("%llu", context->item.as.u64);
             break;
-            
+
         case CWP_ITEM_NEGATIVE_INTEGER:
             printf("%lld", context->item.as.i64);
             break;
-            
+
         case CWP_ITEM_FLOAT:
             context->item.as.long_real = (double)context->item.as.real;
-            
+
         case CWP_ITEM_DOUBLE:
             printf ("%g", context->item.as.long_real);
             break;
-            
+
         case CWP_ITEM_STR: {
             printf("\"");
-            
+
             for (i=0; i < (int)context->item.as.str.length; i++)
             {
                 unsigned char c = ((unsigned char*)(context->item.as.str.start))[i];
@@ -113,13 +113,13 @@ static void dump_next_item( cw_unpack_context* context, int tabLevel)
 
             printf("\"");
             break;}
-            
+
         case CWP_ITEM_BIN:
             printf("(");
             dump_as_hex (context->item.as.bin.start, context->item.as.bin.length);
             printf(")");
             break;
-            
+
         case CWP_ITEM_ARRAY:
             printf("[");
             dim = context->item.as.array.size;
@@ -133,7 +133,7 @@ static void dump_next_item( cw_unpack_context* context, int tabLevel)
             if(*tabString) NEW_LINE;
             printf("]");
             break;
-            
+
         case CWP_ITEM_MAP:
             printf("{");
             dim = context->item.as.map.size;
@@ -149,7 +149,7 @@ static void dump_next_item( cw_unpack_context* context, int tabLevel)
             if(*tabString) NEW_LINE;
             printf("}");
             break;
-            
+
         case CWP_ITEM_TIMESTAMP:
             printf("'");
             gmtime_r(&context->item.as.time.tv_sec,&tm);
@@ -163,7 +163,7 @@ static void dump_next_item( cw_unpack_context* context, int tabLevel)
             }
             printf("'");
             break;
-            
+
         default:
             if (CWP_ITEM_MIN_RESERVED_EXT <= context->item.type && context->item.type <= CWP_ITEM_MAX_USER_EXT)
             {
@@ -215,7 +215,7 @@ int main(int argc, const char * argv[])
 
     file_unpack_context fuc;
     cw_unpack_context *context = (cw_unpack_context*)&fuc;
-    
+
     init_file_unpack_context (&fuc, 4096, STDIN_FILENO);
     file_unpack_context_set_barrier (&fuc); /* keep whole file in memory buffer to simplify offset calculation */
 
