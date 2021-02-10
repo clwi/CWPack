@@ -116,7 +116,7 @@ typedef enum
     CWP_ITEM_ARRAY                  = 308,
     CWP_ITEM_MAP                    = 309,
     CWP_ITEM_EXT                    = 310,
-    CWP_NOT_AN_ITEM                 = 999,
+    CWP_NOT_AN_ITEM                 = 999
 } cwpack_item_types;
 
 
