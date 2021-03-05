@@ -33,6 +33,6 @@
 - (void) packIn:(cw_pack_context*) buff;
 
 /* ***********************   U N P A C K   *************************/
+- (id) initFromContext:(cw_unpack_context*) buff;
 + (instancetype) unpackFrom:(cw_unpack_context*) buff;
-
 @end

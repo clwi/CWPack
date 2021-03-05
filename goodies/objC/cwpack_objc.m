@@ -24,6 +24,8 @@
 #import "cwpack_objc.h"
 #import "cwpack_utils.h"
 
+#define CWP_ITEM_CLASS_NAME     127
+
 
 id cwObjectFromBuffer (cw_unpack_context* inbuf);
 
@@ -32,8 +34,8 @@ id cwObjectFromBuffer (cw_unpack_context* inbuf);
 
 - (void) packIn:(cw_pack_context*) buff
 {
-    buff->return_code = CWP_RC_ILLEGAL_CALL;  // No pack defined for this object type
-    [NSException raise:@"[NSObject packIn:]" format:@"PackIn not defined for class: %@", [self class]];
+    const char *className= object_getClassName(self);
+    cw_pack_ext (buff, CWP_ITEM_CLASS_NAME, className, (uint32_t)strlen(className));
 }
 
 
@@ -60,6 +62,16 @@ id cwObjectFromBuffer (cw_unpack_context* inbuf);
     }
     return result;
 }
+
+
+- (id) initFromContext:(cw_unpack_context*) buff
+{
+    self = [self init]; // satisfy compiler
+    buff->return_code = CWP_RC_ILLEGAL_CALL;  // No unpack defined for this object type
+    [NSException raise:@"Not defined" format:@"[%@ initFromContext:]", [self class]];
+    return nil;
+}
+
 
 @end
 
@@ -192,6 +204,8 @@ id cwObjectFromBuffer (cw_unpack_context* inbuf);
     NSTimeInterval ti = self.timeIntervalSince1970;
     cw_pack_time_interval (buff, ti);
 }
+
+
 @end
 
 
@@ -227,7 +241,7 @@ id cwObjectFromBuffer (cw_unpack_context* inbuf)
             return [NSNumber numberWithDouble:inbuf->item.as.long_real];
             
         case CWP_ITEM_STR:
-            return [[[NSString alloc] initWithBytes:inbuf->item.as.str.start length:inbuf->item.as.str.length encoding:NSUTF8StringEncoding] autorelease];
+            return [[NSString alloc] initWithBytes:inbuf->item.as.str.start length:inbuf->item.as.str.length encoding:NSUTF8StringEncoding];
             
         case CWP_ITEM_BIN:
             return [NSData dataWithBytes:inbuf->item.as.bin.start length:inbuf->item.as.bin.length];
@@ -263,6 +277,19 @@ id cwObjectFromBuffer (cw_unpack_context* inbuf)
         {
             return [NSDate dateWithTimeIntervalSince1970:inbuf->item.as.time.tv_sec + inbuf->item.as.time.tv_nsec / 1000000000.0];
         }
+
+        case CWP_ITEM_CLASS_NAME:
+        {
+            NSString *cName = [[NSString alloc] initWithBytes:inbuf->item.as.ext.start length:inbuf->item.as.ext.length encoding:NSUTF8StringEncoding];
+            Class objectClass = NSClassFromString(cName);
+            if (objectClass == NULL)
+            {
+                [NSException raise:@"cwObjectFromBuffer" format:@"Class not defined for class: %@", cName];
+            }
+            else
+                return [[objectClass alloc] initFromContext:inbuf];
+        }
+
             
         default:
             return nil;

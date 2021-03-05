@@ -291,7 +291,7 @@ void init_file_pack_context (file_pack_context* fpc, unsigned long initial_buffe
         fpc->pc.return_code = CWP_RC_MALLOC_ERROR;
         return;
     }
-    fpc->fileDescriptor = fileDescriptor;
+
     fpc->fileDescriptor = fileDescriptor;
     fpc->barrier = NULL;
     

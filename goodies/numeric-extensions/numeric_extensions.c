@@ -121,6 +121,9 @@ int64_t get_ext_integer (cw_unpack_context* unpack_context)
     }
 
     switch (unpack_context->item.as.ext.length) {
+        case 0:
+            return 0;
+
         case 1:
             return *(int8_t*)unpack_context->item.as.ext.start;
 

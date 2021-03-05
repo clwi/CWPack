@@ -25,8 +25,10 @@
 #include <unistd.h>
 #include <string.h>
 #include "basic_contexts.h"
+#include "numeric_extensions.h"
 
 char tabString[21] = "                     ";
+bool recognizeObjects = false;
 
 #define NEW_LINE {printf ("\n%6x  ",(unsigned)(context->current - context->start)); for (ti=0; ti<tabLevel; ti++) printf ("%s",tabString);}
 #define CHECK_NEW_LINE if(*tabString) NEW_LINE else if (i) printf(" ")
@@ -43,9 +45,16 @@ static void dump_as_hex(const void* area, long length)
         printf("%02x",c);
     }
 }
-
+static void dump_item( cw_unpack_context* context, int tabLevel);
 
 static void dump_next_item( cw_unpack_context* context, int tabLevel)
+{
+    cw_unpack_next (context);
+    if (context->return_code) return;
+    dump_item (context, tabLevel);
+}
+
+static void dump_item( cw_unpack_context* context, int tabLevel)
 {
     
     long long dim =99;
@@ -55,20 +64,18 @@ static void dump_next_item( cw_unpack_context* context, int tabLevel)
     char    s[128];
 
     if (!tabLevel) NEW_LINE;
-    cw_unpack_next (context);
-    if (context->return_code) return;
 
     switch (context->item.type)
     {
         case CWP_ITEM_NIL:
-            printf("null");
+            printf("nil");
             break;
             
         case CWP_ITEM_BOOLEAN:
             if (context->item.as.boolean)
-                printf("true");
+                printf("YES");
             else
-                printf("false");
+                printf("NO");
             break;
             
         case CWP_ITEM_POSITIVE_INTEGER:
@@ -115,24 +122,79 @@ static void dump_next_item( cw_unpack_context* context, int tabLevel)
             break;}
             
         case CWP_ITEM_BIN:
-            printf("(");
+            printf("<");
             dump_as_hex (context->item.as.bin.start, context->item.as.bin.length);
-            printf(")");
+            printf(">");
             break;
             
         case CWP_ITEM_ARRAY:
-            printf("[");
+        {
             dim = context->item.as.array.size;
-            tabLevel++;
-            for (i = 0; i < dim; i++)
+            if (!dim)
             {
-                CHECK_NEW_LINE;
-                dump_next_item(context,tabLevel);
+                printf("[]");
+                break;
             }
-            tabLevel--;
-            if(*tabString) NEW_LINE;
-            printf("]");
+
+            cw_unpack_next (context);
+            if (context->return_code) break;
+
+            if (recognizeObjects && (context->item.type == 127))
+            {
+                long label = get_ext_integer(context);
+                bool userObject = label >= 0;
+                if (dim == 1) /* reference */
+                {
+                    printf("->%ld",label);
+                    break;
+                }
+                if (label)
+                    printf("%ld->",labs(label));
+                if (!userObject)
+                {
+                    if (dim != 2)
+                    {
+                        context->return_code = CWP_RC_MALFORMED_INPUT;
+                        break;
+                    }
+                    dump_next_item(context,tabLevel);
+                    break;
+                }
+                cw_unpack_next (context);
+                if (context->return_code) break;
+                if (context->item.type != CWP_ITEM_STR)
+                {
+                    context->return_code = CWP_RC_MALFORMED_INPUT;
+                    break;
+                }
+                printf("%.*s(",context->item.as.str.length, context->item.as.str.start);
+                tabLevel++;
+                for (i = 2; i < dim; i++)
+                {
+                    CHECK_NEW_LINE;
+                    dump_next_item(context,tabLevel);
+                }
+                tabLevel--;
+                if(*tabString) NEW_LINE;
+                printf(")");
+            }
+            else
+            {
+                printf("[");
+                tabLevel++;
+                CHECK_NEW_LINE;
+                dump_item(context,tabLevel);
+                for (i = 1; i < dim; i++)
+                {
+                    CHECK_NEW_LINE;
+                    dump_next_item(context,tabLevel);
+                }
+                tabLevel--;
+                if(*tabString) NEW_LINE;
+                printf("]");
+            }
             break;
+        }
             
         case CWP_ITEM_MAP:
             printf("{");
@@ -152,7 +214,8 @@ static void dump_next_item( cw_unpack_context* context, int tabLevel)
             
         case CWP_ITEM_TIMESTAMP:
             printf("'");
-            gmtime_r(&context->item.as.time.tv_sec,&tm);
+            time_t tv_sec = context->item.as.time.tv_sec;
+            gmtime_r(&tv_sec,&tm);
             strftime(s,128,"%F %T", &tm);
             printf("%s",s);
             if (context->item.as.time.tv_nsec)
@@ -200,12 +263,17 @@ int main(int argc, const char * argv[])
             printf("cwpack_dump version = 1.0\n");
             exit(0);
         }
+        else if (!strcmp(argv[i],"-r"))
+        {
+            recognizeObjects = true;
+        }
         else
         {
-            printf("cwpack_dump [-t 9] [-v] [-h]\n");
+            printf("cwpack_dump [-t 9] [-r] [-v] [-h]\n");
+            printf("-h   Help\n");
+            printf("-r   Recognize records\n");
             printf("-t 9 Tab size\n");
             printf("-v   Version\n");
-            printf("-h   Help\n");
             printf("\nIf Tab size isn't given, structures are written on a single line\n");
             printf("\nInput is taken from stdin and output is written to stdout\n");
             exit(0);
