@@ -1,18 +1,18 @@
 /*      CWPack/goodies - cwpack_objc.m   */
 /*
  The MIT License (MIT)
- 
+
  Copyright (c) 2017 Claes Wihlborg
- 
+
  Permission is hereby granted, free of charge, to any person obtaining a copy of this
  software and associated documentation files (the "Software"), to deal in the Software
  without restriction, including without limitation the rights to use, copy, modify,
  merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit
  persons to whom the Software is furnished to do so, subject to the following conditions:
- 
+
  The above copyright notice and this permission notice shall be included in all copies or
  substantial portions of the Software.
- 
+
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING
  BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
@@ -45,7 +45,7 @@ id cwObjectFromBuffer (cw_unpack_context* inbuf);
 + (instancetype) unpackFrom:(cw_unpack_context*) buff
 {
     id result = cwObjectFromBuffer(buff);
-    
+
     if (![[result class] isSubclassOfClass:self])
     {
         if ([[result class] isSubclassOfClass:[NSArray class]] && [self isSubclassOfClass:[NSSet class]])
@@ -219,33 +219,33 @@ id cwObjectFromBuffer (cw_unpack_context* inbuf)
     cw_unpack_next(inbuf);
     if (inbuf->return_code)
         return nil;
-    
+
     switch (inbuf->item.type)
     {
         case CWP_ITEM_NIL:
             return [NSNull null];
-            
+
         case CWP_ITEM_BOOLEAN:
             return [NSNumber numberWithBool:inbuf->item.as.boolean];
-            
+
         case CWP_ITEM_POSITIVE_INTEGER:
             return [NSNumber numberWithUnsignedLongLong:inbuf->item.as.u64];
-            
+
         case CWP_ITEM_NEGATIVE_INTEGER:
             return [NSNumber numberWithLongLong:inbuf->item.as.i64];
-            
+
         case CWP_ITEM_FLOAT:
             return [[NSNumber alloc] initWithFloat:inbuf->item.as.real];
-            
+
         case CWP_ITEM_DOUBLE:
             return [NSNumber numberWithDouble:inbuf->item.as.long_real];
-            
+
         case CWP_ITEM_STR:
             return [[NSString alloc] initWithBytes:inbuf->item.as.str.start length:inbuf->item.as.str.length encoding:NSUTF8StringEncoding];
-            
+
         case CWP_ITEM_BIN:
             return [NSData dataWithBytes:inbuf->item.as.bin.start length:inbuf->item.as.bin.length];
-            
+
         case CWP_ITEM_ARRAY:
         {
             int i, dim = inbuf->item.as.array.size;
@@ -258,7 +258,7 @@ id cwObjectFromBuffer (cw_unpack_context* inbuf)
             }
             return arr;
         }
-            
+
         case CWP_ITEM_MAP:
         {
             int i, dim = inbuf->item.as.map.size;
@@ -272,7 +272,7 @@ id cwObjectFromBuffer (cw_unpack_context* inbuf)
             }
             return dict;
         }
-            
+
         case CWP_ITEM_TIMESTAMP:
         {
             return [NSDate dateWithTimeIntervalSince1970:inbuf->item.as.time.tv_sec + inbuf->item.as.time.tv_nsec / 1000000000.0];
@@ -290,7 +290,6 @@ id cwObjectFromBuffer (cw_unpack_context* inbuf)
                 return [[objectClass alloc] initFromContext:inbuf];
         }
 
-            
         default:
             return nil;
     }
