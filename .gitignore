@@ -12,5 +12,4 @@ cwpackModuleTest
 json2cwpack2json
 
 # Data files
-*.msgpack
 *.msgpack.json

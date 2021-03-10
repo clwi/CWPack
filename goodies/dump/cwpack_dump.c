@@ -1,4 +1,6 @@
-/*      CWPack/goodies - cwpack_dump.c   */
+
+/*      CWPack/goodies/dump - cwpack_dump.c   */
+
 /*
  The MIT License (MIT)
 
@@ -30,8 +32,8 @@
 char tabString[21] = "                     ";
 bool recognizeObjects = false;
 
-#define NEW_LINE {printf ("\n%6x  ",(unsigned)(context->current - context->start)); for (ti=0; ti<tabLevel; ti++) printf ("%s",tabString);}
-#define CHECK_NEW_LINE if(*tabString) NEW_LINE else if (i) printf(" ")
+#define NEW_LINE(tablevel) {printf ("\n%6x  ",(unsigned)(context->current - context->start)); for (ti=0; ti<tablevel; ti++) printf ("%s",tabString);}
+#define CHECK_NEW_LINE if(*tabString) NEW_LINE(tabLevel) else if (i) printf(" ")
 
 /*******************************   DUMP NEXT ITEM   **********************************/
 
@@ -39,11 +41,13 @@ static void dump_as_hex(const void* area, long length)
 {
     unsigned int i;
     unsigned char c;
+    printf("<");
     for (i=0; i < length; i++)
     {
         c = ((unsigned char*)area)[i];
         printf("%02x",c);
     }
+    printf(">");
 }
 static void dump_item( cw_unpack_context* context, int tabLevel);
 
@@ -61,8 +65,6 @@ static void dump_item( cw_unpack_context* context, int tabLevel)
     double d;
     struct tm tm;
     char    s[128];
-
-    if (!tabLevel) NEW_LINE;
 
     switch (context->item.type)
     {
@@ -121,9 +123,7 @@ static void dump_item( cw_unpack_context* context, int tabLevel)
             break;}
 
         case CWP_ITEM_BIN:
-            printf("<");
             dump_as_hex (context->item.as.bin.start, context->item.as.bin.length);
-            printf(">");
             break;
 
         case CWP_ITEM_ARRAY:
@@ -148,7 +148,7 @@ static void dump_item( cw_unpack_context* context, int tabLevel)
                     break;
                 }
                 if (label)
-                    printf("%ld->",labs(label));
+                    printf("%ld->",label);
                 if (!userObject)
                 {
                     if (dim != 2)
@@ -168,19 +168,20 @@ static void dump_item( cw_unpack_context* context, int tabLevel)
                 }
                 printf("%.*s(",context->item.as.str.length, context->item.as.str.start);
                 tabLevel++;
-                for (i = 2; i < dim; i++)
+                for (i = 0; i < dim-2; i++)
                 {
                     CHECK_NEW_LINE;
                     dump_next_item(context,tabLevel);
                 }
                 tabLevel--;
-                if(*tabString) NEW_LINE;
+                if(*tabString) NEW_LINE(tabLevel);
                 printf(")");
             }
             else
             {
                 printf("[");
                 tabLevel++;
+                i = 0;
                 CHECK_NEW_LINE;
                 dump_item(context,tabLevel);
                 for (i = 1; i < dim; i++)
@@ -189,7 +190,7 @@ static void dump_item( cw_unpack_context* context, int tabLevel)
                     dump_next_item(context,tabLevel);
                 }
                 tabLevel--;
-                if(*tabString) NEW_LINE;
+                if(*tabString) NEW_LINE(tabLevel);
                 printf("]");
             }
             break;
@@ -203,11 +204,11 @@ static void dump_item( cw_unpack_context* context, int tabLevel)
             {
                 CHECK_NEW_LINE;
                 dump_next_item(context,tabLevel);
-                printf(": ");
+                printf(":");
                 dump_next_item(context,tabLevel);
             }
             tabLevel--;
-            if(*tabString) NEW_LINE;
+            if(*tabString) NEW_LINE(tabLevel);
             printf("}");
             break;
 
@@ -288,6 +289,8 @@ int main(int argc, const char * argv[])
 
     while (!context->return_code)
     {
+        int ti;
+        NEW_LINE(0);
         dump_next_item(context,0);
     }
     printf("\n");

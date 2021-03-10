@@ -77,3 +77,15 @@ CWPack has no dependencies to other libraries.
 ## Test
 
 Included in the test folder are a module test and a performance test and shell scripts to run them.
+
+# Objective-C
+
+CWPack also contains an Objective-C interface. The MessagePack home page example would look as:
+
+```C
+CWPackContext *pc = [CWPackContext newWithContext:my_cw_pack_context];
+[pc packObject:@{@"compact":@YES, @"schema":@0}];
+
+CWUnpackContext *uc = [CWUnpackContext newWithContext:my_cw_unpack_context];
+NSDictionary *dict = [uc unpackNextObject];
+```

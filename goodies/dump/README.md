@@ -7,7 +7,7 @@ Syntax:
 cwpack_dump [-t 9] [-v][-r] [-h] < msgpackFile > humanReadableFile  
 -t 9 Tab size  
 -v   Version  
--r   Recognize records
+-r   Recognize records  
 -h   Help  
 
 Each topmost msgpack item in the file starts on a new line. Each line starts with a file offset (hex) of the first item on the line.
@@ -39,11 +39,15 @@ and  `cwpack_dump -t 4 < testdump.msgpack` prints:
 The -r option makes dump recognize Objective-C objects.  `cwpack_dump < testdump2.msgpack` prints:
 
 ```
-     0  [(127,<01>) "MyClass" [(127,<02>) "MyClass" [(127,<01>)]]]
+     0  [(127,<ff>) [[(127,<ff>)]]]
+     9  [(127,<01>) "MyClass" 10 [(127,<02>) "MyClass" 20 [(127,<01>)]]]
+    27  
 ```
 and `cwpack_dump  -r < testdump2.msgpack` prints
 
 ```
-     0  1->MyClass(2->MyClass(->1))
+     0  -1->[->-1]
+     9  1->MyClass(10 2->MyClass(20 ->1))
+    27  
 ```
 
