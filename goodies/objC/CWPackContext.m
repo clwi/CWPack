@@ -245,6 +245,7 @@
             if (dim == 0)
             {
                 object = NSMutableArray.new;
+                break;
             }
             else
             {
