@@ -350,7 +350,7 @@
         else if (len == 8)                                                  \
         {                                                                   \
             cw_load64(p,tmpu64);                                            \
-            unpack_context->item.as.time.tv_sec = tmpu64 & 0x00000003ffffffffL; \
+            unpack_context->item.as.time.tv_sec = tmpu64 & 0x00000003ffffffffLL; \
             unpack_context->item.as.time.tv_nsec = tmpu64 >> 34;            \
             return;                                                         \
         }                                                                   \

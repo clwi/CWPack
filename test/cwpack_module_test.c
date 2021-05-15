@@ -45,12 +45,13 @@ static void ERROR(const char* msg)
     printf("ERROR: %s\n", msg);
 }
 
-
+/*
 static void ERROR1(const char* msg, int i)
 {
     error_count++;
     printf("ERROR: %s%d\n", msg, i);
 }
+*/
 
 static void ERROR2(const char* msg, int i, int j)
 {
@@ -148,6 +149,8 @@ static void check_unpack(int val, int result)
 
 int main(int argc, const char * argv[])
 {
+    (void)argc;(void)argv;
+    
     printf("CWPack module test started.\n");
     error_count = 0;
 
@@ -412,6 +415,7 @@ int main(int argc, const char * argv[])
 #define TESTUP_AREA(buffer,etype,blob,len)                 \
     blob_length = len;                                     \
     TESTUP_VAL(buffer,etype,blob.length,len)               \
+    TESTUP_VAL(buffer,etype,blob.start,inputbuf + strlen(buffer)/2)
 
     // TESTUP str
     TESTUP_AREA("a0",STR,str,0);

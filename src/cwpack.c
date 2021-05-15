@@ -288,7 +288,7 @@ void cw_pack_bin(cw_pack_context* pack_context, const void* v, uint32_t l)
 
     if (pack_context->be_compatible)
     {
-        cw_pack_str( pack_context, v, l);
+        cw_pack_str( pack_context, (const char*)v, l);
         return;
     }
 
@@ -393,7 +393,7 @@ void cw_pack_time (cw_pack_context* pack_context, int64_t sec, uint32_t nsec)
 
     uint8_t *p;
 
-    if ((uint64_t)sec & 0xfffffffc00000000L) {
+    if ((uint64_t)sec & 0xfffffffc00000000LL) {
         // timestamp 96
         //serialize(0xc7, 12, -1, nsec, sec)
         cw_pack_reserve_space(15);
@@ -405,7 +405,7 @@ void cw_pack_time (cw_pack_context* pack_context, int64_t sec, uint32_t nsec)
     }
     else {
         uint64_t data64 = (((uint64_t)nsec << 34) | (uint64_t)sec);
-        if (data64 & 0xffffffff00000000L) {
+        if (data64 & 0xffffffff00000000LL) {
             // timestamp 64
             //serialize(0xd7, -1, data64)
             cw_pack_reserve_space(10);
