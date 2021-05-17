@@ -45,7 +45,7 @@ void example (void)
     if (cw_unpack_next_map_size(&uc) != 2) ERROR;
     if (cw_unpack_next_str_lengh(&uc) != 7) ERROR;
     if (strncmp("compact", uc.item.as.str.start, 7)) ERROR;
-    if (cw_unpack_next_bool(&uc) != true) ERROR;
+    if (cw_unpack_next_boolean(&uc) != true) ERROR;
     if (cw_unpack_next_str_lengh(&uc) != 6) ERROR;
     if (strncmp("schema", uc.item.as.str.start, 6)) ERROR;
     if (cw_unpack_next_signed32(&uc) != 0) ERROR;
