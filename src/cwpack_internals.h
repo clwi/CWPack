@@ -197,13 +197,14 @@
 
 
 
-#define UNPACK_ERROR(error_code)                        \
+#define UNPACK_ERROR_SUB(error_code,abortValue)         \
 {                                                       \
     unpack_context->item.type = CWP_NOT_AN_ITEM;        \
     unpack_context->return_code = error_code;           \
-    return;                                             \
+    return abortValue;                                  \
 }
 
+#define UNPACK_ERROR(error_code)  UNPACK_ERROR_SUB(error_code,)
 
 
 #ifdef COMPILE_FOR_BIG_ENDIAN
@@ -280,27 +281,29 @@
 
 
 
-#define cw_unpack_assert_space(more)                                                                \
+#define cw_unpack_assert_space_sub(more,abortValue)                                                 \
 {                                                                                                   \
     p = unpack_context->current;                                                                    \
     uint8_t* nyp = p + more;                                                                        \
     if (nyp > unpack_context->end)                                                                  \
     {                                                                                               \
         if (!unpack_context->handle_unpack_underflow)                                               \
-            UNPACK_ERROR(buffer_end_return_code)                                                    \
+            UNPACK_ERROR_SUB(buffer_end_return_code,abortValue)                                     \
         int rc = unpack_context->handle_unpack_underflow (unpack_context, (unsigned long)(more));   \
         if (rc != CWP_RC_OK)                                                                        \
         {                                                                                           \
             if (rc != CWP_RC_END_OF_INPUT)                                                          \
-                UNPACK_ERROR(rc)                                                                    \
+                UNPACK_ERROR_SUB(rc,abortValue)                                                     \
             else                                                                                    \
-                UNPACK_ERROR(buffer_end_return_code)                                                \
+                UNPACK_ERROR_SUB(buffer_end_return_code,abortValue)                                 \
         }                                                                                           \
         p = unpack_context->current;                                                                \
         nyp = p + more;                                                                             \
     }                                                                                               \
     unpack_context->current = nyp;                                                                  \
 }
+
+#define cw_unpack_assert_space(more) cw_unpack_assert_space_sub(more,)
 
 
 #define cw_unpack_assert_blob(blob)                                         \

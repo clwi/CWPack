@@ -80,7 +80,7 @@ Included in the test folder are a module test and a performance test and shell s
 
 # Objective-C
 
-CWPack also contains an Objective-C interface. The MessagePack home page example would look as:
+CWPack also contains an Objective-C interface. The MessagePack home page example would look like:
 
 ```C
 CWPackContext *pc = [CWPackContext newWithContext:my_cw_pack_context];
@@ -89,3 +89,14 @@ CWPackContext *pc = [CWPackContext newWithContext:my_cw_pack_context];
 CWUnpackContext *uc = [CWUnpackContext newWithContext:my_cw_unpack_context];
 NSDictionary *dict = [uc unpackNextObject];
 ```
+
+# Swift
+
+CWPack also contains a Swift interface. The MessagePack home page example would pack like:
+
+```
+let packer = CWDataPacker()
+packer + ["compact":true, "schema":0]
+let data = packer.data
+
+	```

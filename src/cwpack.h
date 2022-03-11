@@ -304,6 +304,7 @@ int cw_unpack_context_init (cw_unpack_context* unpack_context, const void* data,
 
 void cw_unpack_next (cw_unpack_context* unpack_context);
 void cw_skip_items (cw_unpack_context* unpack_context, long item_count);
+cwpack_item_types cw_look_ahead (cw_unpack_context* unpack_context);
 
 
 #endif  /* CWPack_H__ */

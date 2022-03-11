@@ -33,7 +33,7 @@
 void cw_pack_double_opt (cw_pack_context* pack_context, double d)
 {
     int i = (int)d;
-    if (i == d)
+    if ((i == d) && (i >= INT32_MIN) && (i <= UINT32_MAX))
         cw_pack_signed(pack_context, i);
     else
     {
@@ -49,7 +49,7 @@ void cw_pack_double_opt (cw_pack_context* pack_context, double d)
 void cw_pack_float_opt (cw_pack_context* pack_context, float f)
 {
     int i = (int)f;
-    if (i == f)
+    if ((i == f) && (i >= INT16_MIN) && (i <= UINT16_MAX))
         cw_pack_signed(pack_context, i);
     else
         cw_pack_float (pack_context, f);
@@ -95,6 +95,20 @@ double cw_unpack_next_double (cw_unpack_context* unpack_context)
                                             return NaN;
     }
 }
+
+void cw_unpack_next_nil (cw_unpack_context* unpack_context)
+{
+    cw_unpack_next (unpack_context);
+    if (unpack_context->return_code)
+        return;
+    if (unpack_context->item.type == CWP_ITEM_NIL)
+        return;
+
+    unpack_context->return_code = CWP_RC_TYPE_ERROR;
+    return;
+}
+
+
 
 bool cw_unpack_next_boolean (cw_unpack_context* unpack_context)
 {
@@ -341,6 +355,19 @@ unsigned int cw_unpack_next_str_lengh (cw_unpack_context* unpack_context)
 }
 
 
+unsigned int cw_unpack_next_bin_lengh (cw_unpack_context* unpack_context)
+{
+    cw_unpack_next (unpack_context);
+    if (unpack_context->return_code)        return 0;
+
+    if (unpack_context->item.type == CWP_ITEM_BIN)
+        return unpack_context->item.as.bin.length;
+
+    unpack_context->return_code = CWP_RC_TYPE_ERROR;
+    return 0;
+}
+
+
 unsigned int cw_unpack_next_array_size(cw_unpack_context* unpack_context)
 {
     cw_unpack_next (unpack_context);
@@ -364,3 +391,4 @@ unsigned int cw_unpack_next_map_size(cw_unpack_context* unpack_context)
     unpack_context->return_code = CWP_RC_TYPE_ERROR;
     return 0;
 }
+

@@ -338,7 +338,10 @@ int main(int argc, const char * argv[])
     for (ui = 0; ui < len; ui++)                                                        \
     inputbuf[ui] = (uint8_t)(char2hex(buffer[2*ui])<<4) + char2hex(buffer[2*ui +1]);    \
     cw_unpack_context_init (&unpack_ctx, inputbuf, len+blob_length, 0);                 \
-    cw_unpack_next(&unpack_ctx);                                                       \
+    cit = cw_look_ahead(&unpack_ctx);                                                   \
+    if (cit != CWP_ITEM_##etype)                                                        \
+        ERROR("In lookahead, type error");                                              \
+    cw_unpack_next(&unpack_ctx);                                                        \
     if (unpack_ctx.item.type != CWP_ITEM_##etype)                                       \
         ERROR("In unpack, type error");                                                 \
 }
@@ -349,6 +352,7 @@ int main(int argc, const char * argv[])
         ERROR("In unpack, value error");
 
     unsigned long blob_length = 0;
+    cwpack_item_types cit;
 
     // TESTUP NIL
     TESTUP("c0",NIL);
