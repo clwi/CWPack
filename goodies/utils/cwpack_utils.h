@@ -40,6 +40,7 @@ void cw_pack_time_interval (cw_pack_context* pack_context, double ti); /* ti is 
 
 /*****************************   U N P A C K   ********************************/
 
+void cw_unpack_next_nil (cw_unpack_context* unpack_context);
 bool cw_unpack_next_boolean (cw_unpack_context* unpack_context);
 
 int64_t cw_unpack_next_signed64 (cw_unpack_context* unpack_context);
@@ -58,6 +59,7 @@ double cw_unpack_next_time_interval (cw_unpack_context* unpack_context);
 #define cw_unpack_next_real cw_unpack_next_double                           /* Backward compatibility */
 
 unsigned int cw_unpack_next_str_lengh (cw_unpack_context* unpack_context);
+unsigned int cw_unpack_next_bin_lengh (cw_unpack_context* unpack_context);
 
 unsigned int cw_unpack_next_array_size(cw_unpack_context* unpack_context);
 unsigned int cw_unpack_next_map_size(cw_unpack_context* unpack_context);

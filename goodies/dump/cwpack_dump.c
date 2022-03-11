@@ -32,7 +32,7 @@
 char tabString[21] = "                     ";
 bool recognizeObjects = false;
 
-#define NEW_LINE(tablevel) {printf ("\n%6x  ",(unsigned)(context->current - context->start)); for (ti=0; ti<tablevel; ti++) printf ("%s",tabString);}
+#define NEW_LINE(tablevel) {printf ("\n%6x %6ld  ",(unsigned)(context->current - context->start),(context->current - context->start)); for (ti=0; ti<tablevel; ti++) printf ("%s",tabString);}
 #define CHECK_NEW_LINE if(*tabString) NEW_LINE(tabLevel) else if (i) printf(" ")
 
 /*******************************   DUMP NEXT ITEM   **********************************/
@@ -197,6 +197,13 @@ static void dump_item( cw_unpack_context* context, int tabLevel)
         }
 
         case CWP_ITEM_MAP:
+            dim = context->item.as.map.size;
+            if (!dim)
+            {
+                printf("{}");
+                break;
+            }
+
             printf("{");
             dim = context->item.as.map.size;
             tabLevel++;

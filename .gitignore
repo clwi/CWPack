@@ -8,6 +8,7 @@
 *.o
 
 # Executables
+cwpack_dump
 cwpackModuleTest
 json2cwpack2json
 

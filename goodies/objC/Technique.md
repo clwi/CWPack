@@ -41,7 +41,7 @@ The cwpack dump utility "knows" object markers and prints the above message as:
 
 1->MyClass(10 2->MyClass(20 ->1))
 
-### MessagePack objects
+### MessagePack items
 
 It is not just user objects that can contain circular references. Take this example:
 
@@ -50,11 +50,9 @@ NSMutableArray *a = NSMutableArray.new;
 [a addObject:a];
 [myContext packObject:a];
 ```
-Obviously we need a way to label MessagePack objects also. We do as for user objects, but instead for a class-name in the second slot we put the MessagePack object. In this case, there are just 2 slots.
-
-There is one problem here. If the MessagePack object is a string, it looks exactly like an user object with no attributes. We solve this ambiguity by letting MessagePack objects have negative labels starting with -1. So the packing above becomes:
+Obviously we need a way to label MessagePack objects also. To that point we divide the MessagePack items in two cathegories: references and values. Arrays and maps are references and all other items are values. For references we do as for user objects, but instead of a class-name in the second slot we put the MessagePack object. In this case, there are just 2 slots. So the packing above becomes:
 
 ```C
-[(127,<ff>) [[(127,<ff>)]]]
+[(127,<01>) [[(127,<01>)]]]
 ```
-Or prettyprinted: -1->[-> -1]
+Or prettyprinted: 1->[->1]

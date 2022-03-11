@@ -11,5 +11,7 @@ Goodies contains the following:
 
 **objC** Objective-C wrapper.
 
+**swift** Swift wrapper.
+
 **utils** convenience calls and expect api for CWPack.
 
