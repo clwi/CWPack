@@ -253,7 +253,7 @@ extension Data: CWPackable {
     }
 
     init (_ unpacker: CWUnpacker) throws {
-        let l = cw_unpack_next_bin_lengh(unpacker.p)
+        let l = cw_unpack_next_bin_length(unpacker.p)
         guard unpacker.OK else {throw CWPackError.unpackerError("Data")}
         if l > 0 {self.init(bytes: unpacker.p.pointee.item.as.bin.start, count: Int(l))}
         else {self.init()}
@@ -267,7 +267,7 @@ extension String: CWPackable {
     }
 
     init (_ unpacker: CWUnpacker) throws {
-        let l = cw_unpack_next_str_lengh(unpacker.p)
+        let l = cw_unpack_next_str_length(unpacker.p)
         guard unpacker.OK else {throw CWPackError.unpackerError("String")}
         if l > 0 {self.init(NSString(bytes: unpacker.p.pointee.item.as.str.start, length: Int(l), encoding: String.Encoding.utf8.rawValue)!)}
         else {self.init()}
@@ -338,6 +338,37 @@ extension Dictionary: CWPackable where Key: CWPackable , Value: CWPackable {
                 self[k] = v
             }
         }
+    }
+}
+
+
+// MARK: ----------------------------------------------- Core graphics type extensions
+
+extension CGPoint: CWPackable {
+    func cwPack(_ packer: CWPacker) {
+        packer + ArrayHeader(2)
+        packer + Double(self.x)
+        packer + Double(self.y)
+    }
+
+    init (_ unpacker: CWUnpacker) throws {
+        guard try ArrayHeader(unpacker).count == 2 else {throw CWPackError.unpackerError("CGPoint")}
+        self = try CGPoint(x: CGFloat(Double(unpacker)), y: CGFloat(Double(unpacker)))
+    }
+}
+
+extension CGRect: CWPackable {
+    func cwPack(_ packer: CWPacker) {
+        packer + ArrayHeader(4)
+        packer + Double(self.origin.x)
+        packer + Double(self.origin.y)
+        packer + Double(self.size.width)
+        packer + Double(self.size.height)
+    }
+
+    init (_ unpacker: CWUnpacker) throws {
+        guard try ArrayHeader(unpacker).count == 4 else {throw CWPackError.unpackerError("CGRect")}
+        self = try CGRect(x: CGFloat(Double(unpacker)), y: CGFloat(Double(unpacker)), width: CGFloat(Double(unpacker)), height: CGFloat(Double(unpacker)))
     }
 }
 

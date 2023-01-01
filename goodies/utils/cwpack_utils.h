@@ -58,8 +58,8 @@ double cw_unpack_next_double (cw_unpack_context* unpack_context);
 double cw_unpack_next_time_interval (cw_unpack_context* unpack_context);
 #define cw_unpack_next_real cw_unpack_next_double                           /* Backward compatibility */
 
-unsigned int cw_unpack_next_str_lengh (cw_unpack_context* unpack_context);
-unsigned int cw_unpack_next_bin_lengh (cw_unpack_context* unpack_context);
+unsigned int cw_unpack_next_str_length (cw_unpack_context* unpack_context);
+unsigned int cw_unpack_next_bin_length (cw_unpack_context* unpack_context);
 
 unsigned int cw_unpack_next_array_size(cw_unpack_context* unpack_context);
 unsigned int cw_unpack_next_map_size(cw_unpack_context* unpack_context);
