@@ -341,3 +341,34 @@ extension Dictionary: CWPackable where Key: CWPackable , Value: CWPackable {
     }
 }
 
+
+// MARK: ----------------------------------------------- Core graphics type extensions
+
+extension CGPoint: CWPackable {
+    func cwPack(_ packer: CWPacker) {
+        packer + ArrayHeader(2)
+        packer + Double(self.x)
+        packer + Double(self.y)
+    }
+
+    init (_ unpacker: CWUnpacker) throws {
+        guard try ArrayHeader(unpacker).count == 2 else {throw CWPackError.unpackerError("CGPoint")}
+        self = try CGPoint(x: CGFloat(Double(unpacker)), y: CGFloat(Double(unpacker)))
+    }
+}
+
+extension CGRect: CWPackable {
+    func cwPack(_ packer: CWPacker) {
+        packer + ArrayHeader(4)
+        packer + Double(self.origin.x)
+        packer + Double(self.origin.y)
+        packer + Double(self.size.width)
+        packer + Double(self.size.height)
+    }
+
+    init (_ unpacker: CWUnpacker) throws {
+        guard try ArrayHeader(unpacker).count == 4 else {throw CWPackError.unpackerError("CGRect")}
+        self = try CGRect(x: CGFloat(Double(unpacker)), y: CGFloat(Double(unpacker)), width: CGFloat(Double(unpacker)), height: CGFloat(Double(unpacker)))
+    }
+}
+
