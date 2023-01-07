@@ -249,7 +249,15 @@ extension Date: CWPackable {
 
 extension Data: CWPackable {
     func cwPack(_ packer: CWPacker) {
-        self.withUnsafeBytes {ptr in cw_pack_bin (packer.p, ptr.baseAddress, UInt32(ptr.count))}
+        self.withUnsafeBytes {ptr in
+            length = ptr.count
+            if length < 256 {
+                cw_pack_bin (packer.p, ptr.baseAddress, length)
+            } else {
+                cw_pack_bin_size(packer.p, length)
+                cw_pack_insert(packer.p, ptr.baseAddress, length)
+            }
+        }
     }
 
     init (_ unpacker: CWUnpacker) throws {
@@ -263,7 +271,15 @@ extension Data: CWPackable {
 extension String: CWPackable {
     func cwPack(_ packer: CWPacker) {
         let s = self.utf8CString
-        s.withUnsafeBufferPointer {ptr in cw_pack_str (packer.p, ptr.baseAddress, UInt32(strlen(ptr.baseAddress!)))}
+        s.withUnsafeBufferPointer {ptr in
+            length = UInt32(strlen(ptr.baseAddress!))
+            if length < 256 {
+                cw_pack_str (packer.p, ptr.baseAddress, length)
+            } else{
+                cw_pack_str_size(packer.p, length)
+                cw_pack_insert(packer.p, ptr.baseAddress, length)
+            }
+        }
     }
 
     init (_ unpacker: CWUnpacker) throws {

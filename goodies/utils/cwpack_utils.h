@@ -28,7 +28,7 @@
 
 /*******************************   P A C K   **********************************/
 
-#define cw_pack_cstr(context,string) cw_pack_str (context, string, (uint32)strlen(string))
+#define cw_pack_cstr(context,string) cw_pack_str (context, string, (uint32_t)strlen(string))
 
 void cw_pack_float_opt (cw_pack_context* pack_context, float f);    /* Pack as signed if precision isn't destroyed */
 void cw_pack_double_opt (cw_pack_context* pack_context, double d);  /* Pack as signed or float if precision isn't destroyed */

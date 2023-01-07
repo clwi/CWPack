@@ -45,6 +45,7 @@
 #define CWP_RC_TYPE_ERROR               -10
 #define CWP_RC_VALUE_ERROR              -11
 #define CWP_RC_WRONG_TIMESTAMP_LENGTH   -12
+#define CWP_RC_IO_ERROR                 -13
 
 
 
@@ -55,6 +56,7 @@ struct cw_pack_context;
 
 typedef int (*pack_overflow_handler)(struct cw_pack_context*, unsigned long);
 typedef int (*pack_flush_handler)(struct cw_pack_context*);
+typedef int (*pack_write_handler)(struct cw_pack_context*, const void*, unsigned long);
 
 typedef struct cw_pack_context {
     uint8_t*                current;
@@ -65,12 +67,14 @@ typedef struct cw_pack_context {
     int                     err_no;          /* handlers can save error here */
     pack_overflow_handler   handle_pack_overflow;
     pack_flush_handler      handle_flush;
+    pack_write_handler      handle_write;
 } cw_pack_context;
 
 
 int cw_pack_context_init (cw_pack_context* pack_context, void* data, unsigned long length, pack_overflow_handler hpo);
 void cw_pack_set_compatibility (cw_pack_context* pack_context, bool be_compatible);
 void cw_pack_set_flush_handler (cw_pack_context* pack_context, pack_flush_handler handle_flush);
+void cw_pack_set_write_handler (cw_pack_context* pack_context, pack_write_handler handle_write);
 void cw_pack_flush (cw_pack_context* pack_context);
 
 void cw_pack_nil (cw_pack_context* pack_context);
@@ -87,8 +91,11 @@ void cw_pack_double (cw_pack_context* pack_context, double d);
 
 void cw_pack_array_size (cw_pack_context* pack_context, uint32_t n);
 void cw_pack_map_size (cw_pack_context* pack_context, uint32_t n);
+void cw_pack_str_size (cw_pack_context* pack_context, uint32_t l);
 void cw_pack_str (cw_pack_context* pack_context, const char* v, uint32_t l);
+void cw_pack_bin_size (cw_pack_context* pack_context, uint32_t l);
 void cw_pack_bin (cw_pack_context* pack_context, const void* v, uint32_t l);
+void cw_pack_ext_size (cw_pack_context* pack_context, int8_t type, uint32_t l);
 void cw_pack_ext (cw_pack_context* pack_context, int8_t type, const void* v, uint32_t l);
 void cw_pack_time (cw_pack_context* pack_context, int64_t sec, uint32_t nsec);
 
@@ -286,7 +293,7 @@ typedef struct {
 
 struct cw_unpack_context;
 
-typedef int (*unpack_underflow_handler)(struct cw_unpack_context*, unsigned long);
+typedef int (*unpack_underflow_handler)(struct cw_unpack_context*, void*, unsigned long);
 
 typedef struct cw_unpack_context {
     cwpack_item                 item;
@@ -303,6 +310,8 @@ typedef struct cw_unpack_context {
 int cw_unpack_context_init (cw_unpack_context* unpack_context, const void* data, unsigned long length, unpack_underflow_handler huu);
 
 void cw_unpack_next (cw_unpack_context* unpack_context);
+void cw_unpack_next_descriptor (cw_unpack_context* unpack_context); /* Doesn't read str/bin/ext payload */
+void cw_unpack_data (cw_unpack_context* unpack_context, void* buffer, long length);
 void cw_skip_items (cw_unpack_context* unpack_context, long item_count);
 cwpack_item_types cw_look_ahead (cw_unpack_context* unpack_context);
 

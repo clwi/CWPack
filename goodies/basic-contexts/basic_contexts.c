@@ -95,6 +95,21 @@ static int flush_stream_pack_context(struct cw_pack_context* pc)
 }
 
 
+static int handle_stream_pack_write(struct cw_pack_context* pc, const void* buffer, unsigned long length)
+{
+    if (length > 0) {
+        stream_pack_context* spc = (stream_pack_context*)pc;
+        unsigned long rc = fwrite(buffer, length, 1, spc->file);
+        if (rc != length)
+        {
+            pc->err_no = ferror(spc->file);
+            return CWP_RC_ERROR_IN_HANDLER;
+        }
+    }
+    return CWP_RC_OK;
+}
+
+
 static int handle_stream_pack_overflow(struct cw_pack_context* pc, unsigned long more)
 {
     int rc = flush_stream_pack_context(pc);
@@ -150,9 +165,24 @@ void terminate_stream_pack_context(stream_pack_context* spc)
 /*****************************************  STREAM UNPACK CONTEXT  *******************************/
 
 
-static int handle_stream_unpack_underflow(struct cw_unpack_context* uc, unsigned long more)
+static int handle_stream_unpack_underflow(struct cw_unpack_context* uc, void* buffer, unsigned long more)
 {
     stream_unpack_context* suc = (stream_unpack_context*)uc;
+    if (buffer) {
+        while (more > 0) {
+            unsigned long l = fread(buffer, 1, more, suc->file);
+            if (!l)
+            {
+                if (feof(suc->file))
+                    return CWP_RC_END_OF_INPUT;
+                suc->uc.err_no = ferror(suc->file);
+                return CWP_RC_ERROR_IN_HANDLER;
+            }
+            more -= l;
+            buffer = (char*)buffer + l;
+        }
+        return CWP_RC_OK;
+    }
     unsigned long remains = (unsigned long)(uc->end - uc->current);
     if (remains)
     {
@@ -243,6 +273,20 @@ static int flush_file_pack_context(struct cw_pack_context* pc)
     return CWP_RC_OK;
 }
 
+static int handle_file_pack_write(struct cw_pack_context* pc, const void* buffer, unsigned long length)
+{
+    if (length > 0) {
+        file_pack_context* fpc = (file_pack_context*)pc;
+        long rc = write (fpc->fileDescriptor, buffer, length);
+        if (rc != (long)length)
+        {
+            pc->err_no = errno;
+            return CWP_RC_ERROR_IN_HANDLER;
+        }
+    }
+    return CWP_RC_OK;
+}
+
 static int handle_file_pack_overflow(struct cw_pack_context* pc, unsigned long more)
 {
     file_pack_context* fpc = (file_pack_context*)pc;
@@ -284,7 +328,7 @@ static int handle_file_pack_overflow(struct cw_pack_context* pc, unsigned long m
 
 void init_file_pack_context (file_pack_context* fpc, unsigned long initial_buffer_length, int fileDescriptor)
 {
-    unsigned long buffer_length = (initial_buffer_length > 32 ? initial_buffer_length : 4096);
+    unsigned long buffer_length = (initial_buffer_length > 0 ? initial_buffer_length : 4096);
     void *buffer = malloc (buffer_length);
     if (!buffer)
     {
@@ -297,6 +341,7 @@ void init_file_pack_context (file_pack_context* fpc, unsigned long initial_buffe
 
     cw_pack_context_init((cw_pack_context*)fpc, buffer, buffer_length, &handle_file_pack_overflow);
     cw_pack_set_flush_handler((cw_pack_context*)fpc, &flush_file_pack_context);
+    cw_pack_set_write_handler((cw_pack_context*)fpc, &handle_file_pack_write);
 }
 
 
@@ -327,9 +372,26 @@ void terminate_file_pack_context(file_pack_context* fpc)
 /*****************************************  FILE UNPACK CONTEXT  ********************************/
 
 
-static int handle_file_unpack_underflow(struct cw_unpack_context* uc, unsigned long more)
+static int handle_file_unpack_underflow(struct cw_unpack_context* uc, void* buffer, unsigned long more)
 {
     file_unpack_context* auc = (file_unpack_context*)uc;
+    if (buffer) {
+        while (more > 0) {
+            long l = read(auc->fileDescriptor, buffer, more);
+            if (l == 0)
+            {
+                return CWP_RC_END_OF_INPUT;
+            }
+            if (l < 0)
+            {
+                auc->uc.err_no = errno;
+                return CWP_RC_ERROR_IN_HANDLER;
+            }
+            more -= (unsigned long)l;
+            buffer = (char*)buffer + l;
+        }
+        return CWP_RC_OK;
+    }
     uint8_t *bStart = auc->barrier ? auc->barrier : uc->current;
     unsigned long kept = (unsigned long)(uc->current - bStart);
     unsigned long remains = (unsigned long)(uc->end - bStart);

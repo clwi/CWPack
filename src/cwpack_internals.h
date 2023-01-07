@@ -289,7 +289,7 @@
     {                                                                                               \
         if (!unpack_context->handle_unpack_underflow)                                               \
             UNPACK_ERROR_SUB(buffer_end_return_code,abortValue)                                     \
-        int rc = unpack_context->handle_unpack_underflow (unpack_context, (unsigned long)(more));   \
+        int rc = unpack_context->handle_unpack_underflow (unpack_context, NULL, (unsigned long)(more));   \
         if (rc != CWP_RC_OK)                                                                        \
         {                                                                                           \
             if (rc != CWP_RC_END_OF_INPUT)                                                          \
@@ -339,10 +339,11 @@
     cw_load64(p,unpack_context->item.as.u64);
 
 #define getDDItemFix(len)                                                   \
-    cw_unpack_assert_space(len+1);                                          \
+    cw_unpack_assert_space(1);                                              \
     unpack_context->item.type = (cwpack_item_types)*(int8_t*)p++;           \
     if (unpack_context->item.type == CWP_ITEM_TIMESTAMP)                    \
     {                                                                       \
+        cw_unpack_assert_space(len);                                        \
         if (len == 4)                                                       \
         {                                                                   \
             cw_load32(p);                                                   \
@@ -363,7 +364,7 @@
         }                                                                   \
     }                                                                       \
     unpack_context->item.as.ext.length = len;                               \
-    unpack_context->item.as.ext.start = p;                                  \
+    unpack_context->item.as.ext.start = NULL;                               \
     return;
 
 

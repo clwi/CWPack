@@ -80,6 +80,7 @@ int cw_pack_context_init (cw_pack_context* pack_context, void* data, unsigned lo
     pack_context->err_no = 0;
     pack_context->handle_pack_overflow = hpo;
     pack_context->handle_flush = NULL;
+    pack_context->handle_write = NULL;
     pack_context->return_code = test_byte_order();
     return pack_context->return_code;
 }
@@ -92,6 +93,11 @@ void cw_pack_set_compatibility (cw_pack_context* pack_context, bool be_compatibl
 void cw_pack_set_flush_handler (cw_pack_context* pack_context, pack_flush_handler handle_flush)
 {
     pack_context->handle_flush = handle_flush;
+}
+
+void cw_pack_set_write_handler (cw_pack_context* pack_context, pack_write_handler handle_write)
+{
+    pack_context->handle_write = handle_write;
 }
 
 
@@ -242,6 +248,41 @@ void cw_pack_map_size(cw_pack_context* pack_context, uint32_t n)
 }
 
 
+void cw_pack_str_size (cw_pack_context* pack_context, uint32_t l)
+{
+    if (pack_context->return_code)
+        return;
+
+    uint8_t *p;
+
+    if (l < 32)             // Fixstr
+    {
+        cw_pack_reserve_space(1);
+        *p = (uint8_t)(0xa0 + l);
+        return;
+    }
+    if (l < 256 && !pack_context->be_compatible)       // Str 8
+    {
+        cw_pack_reserve_space(2);
+        *p++ = (uint8_t)(0xd9);
+        *p = (uint8_t)(l);
+        return;
+    }
+    if (l < 65536)     // Str 16
+    {
+        cw_pack_reserve_space(3)
+        *p++ = (uint8_t)0xda;
+        cw_store16(l);
+        return;
+    }
+    // Str 32
+    cw_pack_reserve_space(5)
+    *p++ = (uint8_t)0xdb;
+    cw_store32(l);
+    return;
+}
+
+
 void cw_pack_str(cw_pack_context* pack_context, const char* v, uint32_t l)
 {
     if (pack_context->return_code)
@@ -281,6 +322,41 @@ void cw_pack_str(cw_pack_context* pack_context, const char* v, uint32_t l)
 }
 
 
+void cw_pack_bin_size(cw_pack_context* pack_context, uint32_t l)
+{
+    if (pack_context->return_code)
+        return;
+
+    if (pack_context->be_compatible)
+    {
+        cw_pack_str_size( pack_context, l);
+        return;
+    }
+
+    uint8_t *p;
+
+    if (l < 256)            // Bin 8
+    {
+        cw_pack_reserve_space(2);
+        *p++ = (uint8_t)(0xc4);
+        *p = (uint8_t)(l);
+        return;
+    }
+    if (l < 65536)     // Bin 16
+    {
+        cw_pack_reserve_space(3)
+        *p++ = (uint8_t)0xc5;
+        cw_store16(l);
+        return;
+    }
+    // Bin 32
+    cw_pack_reserve_space(5)
+    *p++ = (uint8_t)0xc6;
+    cw_store32(l);
+    return;
+}
+
+
 void cw_pack_bin(cw_pack_context* pack_context, const void* v, uint32_t l)
 {
     if (pack_context->return_code)
@@ -316,6 +392,64 @@ void cw_pack_bin(cw_pack_context* pack_context, const void* v, uint32_t l)
     cw_store32(l);
     memcpy(p+4,v,l);
     return;
+}
+
+
+void cw_pack_ext_size (cw_pack_context* pack_context, int8_t type, uint32_t l)
+{
+    if (pack_context->return_code)
+        return;
+
+    if (pack_context->be_compatible)
+        PACK_ERROR(CWP_RC_ILLEGAL_CALL);
+
+    uint8_t *p;
+
+    switch (l)
+    {
+        case 1:                                         // Fixext 1
+            cw_pack_reserve_space(2);
+            *p++ = (uint8_t)0xd4;
+            break;
+        case 2:                                         // Fixext 2
+            cw_pack_reserve_space(2);
+            *p++ = (uint8_t)0xd5;
+            break;
+        case 4:                                         // Fixext 4
+            cw_pack_reserve_space(2);
+            *p++ = (uint8_t)0xd6;
+            break;
+        case 8:                                         // Fixext 8
+            cw_pack_reserve_space(2);
+            *p++ = (uint8_t)0xd7;
+            break;
+        case 16:                                        // Fixext16
+            cw_pack_reserve_space(2);
+            *p++ = (uint8_t)0xd8;
+            break;
+        default:
+            if (l < 256)                                // Ext 8
+            {
+                cw_pack_reserve_space(3);
+                *p++ = (uint8_t)0xc7;
+                *p++ = (uint8_t)(l);
+            }
+            else if (l < 65536)                         // Ext 16
+            {
+                cw_pack_reserve_space(4)
+                *p++ = (uint8_t)0xc8;
+                cw_store16(l);
+                p += 2;
+            }
+            else                                        // Ext 32
+            {
+                cw_pack_reserve_space(6)
+                *p++ = (uint8_t)0xc9;
+                cw_store32(l);
+                p += 4;
+            }
+    }
+    *p++ = (uint8_t)type;
 }
 
 
@@ -428,9 +562,17 @@ void cw_pack_time (cw_pack_context* pack_context, int64_t sec, uint32_t nsec)
 
 void cw_pack_insert (cw_pack_context* pack_context, const void* v, uint32_t l)
 {
-    uint8_t *p;
-    cw_pack_reserve_space(l);
-    memcpy(p,v,l);
+    if (pack_context->return_code)
+        return;
+
+    if (pack_context->handle_flush && pack_context->handle_write) {
+        pack_context->handle_flush(pack_context);
+        pack_context->handle_write(pack_context, v, l);
+    } else {
+        uint8_t *p;
+        cw_pack_reserve_space(l);
+        memcpy(p,v,l);
+    }
 }
 
 
@@ -462,7 +604,7 @@ int cw_unpack_context_init (cw_unpack_context* unpack_context, const void* data,
 
 
 
-void cw_unpack_next (cw_unpack_context* unpack_context)
+void cw_unpack_next_descriptor (cw_unpack_context* unpack_context)
 {
     if (unpack_context->return_code)
         return;
@@ -495,90 +637,82 @@ void cw_unpack_next (cw_unpack_context* unpack_context)
         case 0x68: case 0x69: case 0x6a: case 0x6b: case 0x6c: case 0x6d: case 0x6e: case 0x6f:
         case 0x70: case 0x71: case 0x72: case 0x73: case 0x74: case 0x75: case 0x76: case 0x77:
         case 0x78: case 0x79: case 0x7a: case 0x7b: case 0x7c: case 0x7d: case 0x7e: case 0x7f:
-                    getDDItem(CWP_ITEM_POSITIVE_INTEGER, i64, c);       return;  // positive fixnum
+            getDDItem(CWP_ITEM_POSITIVE_INTEGER, i64, c);               return;  // positive fixnum
         case 0x80: case 0x81: case 0x82: case 0x83: case 0x84: case 0x85: case 0x86: case 0x87:
         case 0x88: case 0x89: case 0x8a: case 0x8b: case 0x8c: case 0x8d: case 0x8e: case 0x8f:
-                    getDDItem(CWP_ITEM_MAP, map.size, c & 0x0f);        return;  // fixmap
+            getDDItem(CWP_ITEM_MAP, map.size, c & 0x0f);                return;  // fixmap
         case 0x90: case 0x91: case 0x92: case 0x93: case 0x94: case 0x95: case 0x96: case 0x97:
         case 0x98: case 0x99: case 0x9a: case 0x9b: case 0x9c: case 0x9d: case 0x9e: case 0x9f:
-                    getDDItem(CWP_ITEM_ARRAY, array.size, c & 0x0f);    return;  // fixarray
+            getDDItem(CWP_ITEM_ARRAY, array.size, c & 0x0f);            return;  // fixarray
         case 0xa0: case 0xa1: case 0xa2: case 0xa3: case 0xa4: case 0xa5: case 0xa6: case 0xa7:
         case 0xa8: case 0xa9: case 0xaa: case 0xab: case 0xac: case 0xad: case 0xae: case 0xaf:
         case 0xb0: case 0xb1: case 0xb2: case 0xb3: case 0xb4: case 0xb5: case 0xb6: case 0xb7:
         case 0xb8: case 0xb9: case 0xba: case 0xbb: case 0xbc: case 0xbd: case 0xbe: case 0xbf:
-                    getDDItem(CWP_ITEM_STR, str.length, c & 0x1f);              // fixraw
-                    cw_unpack_assert_blob(str);
+            getDDItem(CWP_ITEM_STR, str.length, c & 0x1f);              return; // fixstr
         case 0xc0:  unpack_context->item.type = CWP_ITEM_NIL;           return;  // nil
         case 0xc2:  getDDItem(CWP_ITEM_BOOLEAN, boolean, false);        return;  // false
         case 0xc3:  getDDItem(CWP_ITEM_BOOLEAN, boolean, true);         return;  // true
-        case 0xc4:  getDDItem1(CWP_ITEM_BIN, bin.length, uint8_t);              // bin 8
-                    cw_unpack_assert_blob(bin);
-        case 0xc5:  getDDItem2(CWP_ITEM_BIN, bin.length, uint16_t);             // bin 16
-                    cw_unpack_assert_blob(bin);
-        case 0xc6:  getDDItem4(CWP_ITEM_BIN, bin.length, uint32_t);             // bin 32
-                    cw_unpack_assert_blob(bin);
-        case 0xc7:  getDDItem1(CWP_ITEM_EXT, ext.length, uint8_t);              // ext 8
-                    cw_unpack_assert_space(1);
-                    unpack_context->item.type = (cwpack_item_types)*(int8_t*)p;
-                    if (unpack_context->item.type == CWP_ITEM_TIMESTAMP)
-                    {
-                        if (unpack_context->item.as.ext.length == 12)
-                        {
-                            cw_unpack_assert_space(4);
-                            cw_load32(p);
-                            unpack_context->item.as.time.tv_nsec = tmpu32;
-                            cw_unpack_assert_space(8);
-                            cw_load64(p,tmpu64);
-                            unpack_context->item.as.time.tv_sec = (int64_t)tmpu64;
-                            return;
-                        }
-                        UNPACK_ERROR(CWP_RC_WRONG_TIMESTAMP_LENGTH)
-                    }
-                    cw_unpack_assert_blob(ext);
-        case 0xc8:  getDDItem2(CWP_ITEM_EXT, ext.length, uint16_t);             // ext 16
-                    cw_unpack_assert_space(1);
-                    unpack_context->item.type = (cwpack_item_types)*(int8_t*)p;
-                    cw_unpack_assert_blob(ext);
-        case 0xc9:  getDDItem4(CWP_ITEM_EXT, ext.length, uint32_t);             // ext 32
-                    cw_unpack_assert_space(1);
-                    unpack_context->item.type = (cwpack_item_types)*(int8_t*)p;
-                    cw_unpack_assert_blob(ext);
-        case 0xca:  unpack_context->item.type = CWP_ITEM_FLOAT;                 // float
+        case 0xc4:  getDDItem1(CWP_ITEM_BIN, bin.length, uint8_t);      return;  // bin 8
+        case 0xc5:  getDDItem2(CWP_ITEM_BIN, bin.length, uint16_t);     return;  // bin 16
+        case 0xc6:  getDDItem4(CWP_ITEM_BIN, bin.length, uint32_t);     return;  // bin 32
+        case 0xc7:  getDDItem1(CWP_ITEM_EXT, ext.length, uint8_t);
+            cw_unpack_assert_space(1);
+            unpack_context->item.type = (cwpack_item_types)*(int8_t*)p;
+            if (unpack_context->item.type != CWP_ITEM_TIMESTAMP)       return;   // ext 8
+            {
+                if (unpack_context->item.as.ext.length == 12)
+                {
                     cw_unpack_assert_space(4);
                     cw_load32(p);
-                    unpack_context->item.as.real = *(float*)&tmpu32;     return;
+                    unpack_context->item.as.time.tv_nsec = tmpu32;
+                    cw_unpack_assert_space(8);
+                    cw_load64(p,tmpu64);
+                    unpack_context->item.as.time.tv_sec = (int64_t)tmpu64;
+                    return;
+                }
+                UNPACK_ERROR(CWP_RC_WRONG_TIMESTAMP_LENGTH)
+            }
+        case 0xc8:  getDDItem2(CWP_ITEM_EXT, ext.length, uint16_t);             // ext 16
+            cw_unpack_assert_space(1);
+            unpack_context->item.type = (cwpack_item_types)*(int8_t*)p;
+            return;
+        case 0xc9:  getDDItem4(CWP_ITEM_EXT, ext.length, uint32_t);             // ext 32
+            cw_unpack_assert_space(1);
+            unpack_context->item.type = (cwpack_item_types)*(int8_t*)p;
+            return;
+        case 0xca:  unpack_context->item.type = CWP_ITEM_FLOAT;                 // float
+            cw_unpack_assert_space(4);
+            cw_load32(p);
+            unpack_context->item.as.real = *(float*)&tmpu32;     return;
         case 0xcb:  getDDItem8(CWP_ITEM_DOUBLE);                         return;  // double
         case 0xcc:  getDDItem1(CWP_ITEM_POSITIVE_INTEGER, u64, uint8_t); return;  // unsigned int  8
         case 0xcd:  getDDItem2(CWP_ITEM_POSITIVE_INTEGER, u64, uint16_t); return; // unsigned int 16
         case 0xce:  getDDItem4(CWP_ITEM_POSITIVE_INTEGER, u64, uint32_t); return; // unsigned int 32
-        case 0xcf:  getDDItem8(CWP_ITEM_POSITIVE_INTEGER);               return;  // unsigned int 64
+        case 0xcf:  getDDItem8(CWP_ITEM_POSITIVE_INTEGER);                return; // unsigned int 64
         case 0xd0:  getDDItem1(CWP_ITEM_NEGATIVE_INTEGER, i64, int8_t);          // signed int  8
-                    if (unpack_context->item.as.i64 >= 0)
-                        unpack_context->item.type = CWP_ITEM_POSITIVE_INTEGER;
-                    return;
+            if (unpack_context->item.as.i64 >= 0)
+                unpack_context->item.type = CWP_ITEM_POSITIVE_INTEGER;
+            return;
         case 0xd1:  getDDItem2(CWP_ITEM_NEGATIVE_INTEGER, i64, int16_t);        // signed int 16
-                    if (unpack_context->item.as.i64 >= 0)
-                        unpack_context->item.type = CWP_ITEM_POSITIVE_INTEGER;
-                    return;
+            if (unpack_context->item.as.i64 >= 0)
+                unpack_context->item.type = CWP_ITEM_POSITIVE_INTEGER;
+            return;
         case 0xd2:  getDDItem4(CWP_ITEM_NEGATIVE_INTEGER, i64, int32_t);        // signed int 32
-                    if (unpack_context->item.as.i64 >= 0)
-                        unpack_context->item.type = CWP_ITEM_POSITIVE_INTEGER;
-                    return;
+            if (unpack_context->item.as.i64 >= 0)
+                unpack_context->item.type = CWP_ITEM_POSITIVE_INTEGER;
+            return;
         case 0xd3:  getDDItem8(CWP_ITEM_NEGATIVE_INTEGER);                      // signed int 64
-                    if (unpack_context->item.as.i64 >= 0)
-                        unpack_context->item.type = CWP_ITEM_POSITIVE_INTEGER;
-                    return;
+            if (unpack_context->item.as.i64 >= 0)
+                unpack_context->item.type = CWP_ITEM_POSITIVE_INTEGER;
+            return;
         case 0xd4:  getDDItemFix(1);                                            // fixext 1
         case 0xd5:  getDDItemFix(2);                                            // fixext 2
-        case 0xd6:  getDDItemFix(4);                                            // fixext 4
+        case 0xd6:  getDDItemFix(4);                                            // fixext 4 /* ????? TIMESTAMP */
         case 0xd7:  getDDItemFix(8);                                            // fixext 8
         case 0xd8:  getDDItemFix(16);                                           // fixext 16
-        case 0xd9:  getDDItem1(CWP_ITEM_STR, str.length, uint8_t);              // str 8
-                    cw_unpack_assert_blob(str);
-        case 0xda:  getDDItem2(CWP_ITEM_STR, str.length, uint16_t);             // str 16
-                    cw_unpack_assert_blob(str);
-        case 0xdb:  getDDItem4(CWP_ITEM_STR, str.length, uint32_t);             // str 32
-                    cw_unpack_assert_blob(str);
+        case 0xd9:  getDDItem1(CWP_ITEM_STR, str.length, uint8_t);     return;  // str 8
+        case 0xda:  getDDItem2(CWP_ITEM_STR, str.length, uint16_t);    return;  // str 16
+        case 0xdb:  getDDItem4(CWP_ITEM_STR, str.length, uint32_t);    return;  // str 32
         case 0xdc:  getDDItem2(CWP_ITEM_ARRAY, array.size, uint16_t);   return;  // array 16
         case 0xdd:  getDDItem4(CWP_ITEM_ARRAY, array.size, uint32_t);   return;  // array 32
         case 0xde:  getDDItem2(CWP_ITEM_MAP, map.size, uint16_t);       return;  // map 16
@@ -587,11 +721,45 @@ void cw_unpack_next (cw_unpack_context* unpack_context)
         case 0xe8: case 0xe9: case 0xea: case 0xeb: case 0xec: case 0xed: case 0xee: case 0xef:
         case 0xf0: case 0xf1: case 0xf2: case 0xf3: case 0xf4: case 0xf5: case 0xf6: case 0xf7:
         case 0xf8: case 0xf9: case 0xfa: case 0xfb: case 0xfc: case 0xfd: case 0xfe: case 0xff:
-                    getDDItem(CWP_ITEM_NEGATIVE_INTEGER, i64, (int8_t)c); return;    // negative fixnum
+            getDDItem(CWP_ITEM_NEGATIVE_INTEGER, i64, (int8_t)c); return;    // negative fixnum
         default:
-                    UNPACK_ERROR(CWP_RC_MALFORMED_INPUT)
+            UNPACK_ERROR(CWP_RC_MALFORMED_INPUT)
     }
 }
+
+
+void cw_unpack_next (cw_unpack_context* unpack_context)
+{
+    cw_unpack_next_descriptor(unpack_context);
+    if (unpack_context->return_code)           return;
+    cwpack_item_types type = unpack_context->item.type;
+    uint8_t*    p;
+    if (type == CWP_ITEM_STR) {cw_unpack_assert_blob(str);}
+    if (type == CWP_ITEM_BIN) {cw_unpack_assert_blob(bin);}
+    if (type > CWP_ITEM_MAX_USER_EXT) return;
+    if (type != CWP_ITEM_TIMESTAMP) {cw_unpack_assert_blob(ext);}
+}
+
+
+void cw_unpack_data (cw_unpack_context* unpack_context, void* buffer, long length)
+{
+    long remeains = unpack_context->end - unpack_context->current;
+    if (remeains > 0) {
+        if (remeains >= length) {
+            memcpy(buffer, unpack_context->current, length);
+            unpack_context->current += length;
+            return;
+        }
+        memcpy(buffer, unpack_context->current, remeains);
+        unpack_context->current = unpack_context->end;
+        buffer = (char*)buffer + remeains;
+        length -= remeains;
+    }
+    if (unpack_context->handle_unpack_underflow) {
+        unpack_context->return_code = unpack_context->handle_unpack_underflow(unpack_context, buffer, (unsigned long)length);
+    }
+}
+
 
 #define cw_skip_bytes(n)                                \
     cw_unpack_assert_space((n));                          \
