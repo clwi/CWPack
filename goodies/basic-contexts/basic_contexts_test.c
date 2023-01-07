@@ -27,6 +27,7 @@
 #include <math.h>
 #include <sys/file.h>
 #include <errno.h>
+#include <unistd.h>
 
 #include "cwpack.h"
 #include "cwpack_internals.h"
@@ -175,7 +176,7 @@ int main(int argc, const char * argv[])
     }
 
 
-    //*******************   TEST basic context  ****************************
+    /*******************   TEST basic context  ****************************/
 
     /*****************************************  DYNAMIC MEMORY PACK CONTEXT  ************************/
     {
@@ -281,9 +282,10 @@ int main(int argc, const char * argv[])
         if (fupc.buffer_length > 4) ERROR("Buffer has expanded");
 
         terminate_file_unpack_context(&fupc);
+        close(fd);
         remove("fptest.dat");
     }
- //************************************************************* End
+ /************************************************************* End */
 
     printf("\nCWPack basic context test completed, ");
     switch (error_count)
