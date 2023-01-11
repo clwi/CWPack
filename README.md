@@ -98,5 +98,4 @@ CWPack also contains a Swift interface. The MessagePack home page example would 
 let packer = CWDataPacker()
 packer + DictionaryHeader(2) + "compact" + true + "schema" + 0
 let data = packer.data
-
-	```
+```

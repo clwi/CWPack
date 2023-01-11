@@ -250,7 +250,7 @@ extension Date: CWPackable {
 extension Data: CWPackable {
     func cwPack(_ packer: CWPacker) {
         self.withUnsafeBytes {ptr in
-            length = ptr.count
+            let length = UInt32(ptr.count)
             if length < 256 {
                 cw_pack_bin (packer.p, ptr.baseAddress, length)
             } else {
@@ -272,7 +272,7 @@ extension String: CWPackable {
     func cwPack(_ packer: CWPacker) {
         let s = self.utf8CString
         s.withUnsafeBufferPointer {ptr in
-            length = UInt32(strlen(ptr.baseAddress!))
+            let length = UInt32(strlen(ptr.baseAddress!))
             if length < 256 {
                 cw_pack_str (packer.p, ptr.baseAddress, length)
             } else{
