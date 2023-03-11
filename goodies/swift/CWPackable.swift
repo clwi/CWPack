@@ -290,6 +290,28 @@ extension String: CWPackable {
     }
 }
 
+extension Set: CWPackable where Element: CWPackable {
+    func cwPack(_ packer: CWPacker) {
+        packer + ArrayHeader(self.count)
+        if self.count > 0 {
+            for i in self {
+                packer + i
+            }
+        }
+    }
+
+    init (_ unpacker: CWUnpacker) throws {
+        let ah = try ArrayHeader(unpacker)
+        self.init()
+        if ah.count > 0 {
+            for _ in 1...ah.count {
+                let e: Element = try Element(unpacker)
+                self.insert(e)
+            }
+        }
+    }
+}
+
 extension Array: CWPackable where Element: CWPackable {
     func cwPack(_ packer: CWPacker) {
         packer + ArrayHeader(self.count)
@@ -360,6 +382,16 @@ extension Dictionary: CWPackable where Key: CWPackable , Value: CWPackable {
 
 // MARK: ----------------------------------------------- Core graphics type extensions
 
+extension CGFloat: CWPackable {
+    func cwPack(_ packer: CWPacker) {
+        packer + Double(self)
+    }
+
+    init (_ unpacker: CWUnpacker) throws {
+        self = try CGFloat(Double(unpacker))
+    }
+}
+
 extension CGPoint: CWPackable {
     func cwPack(_ packer: CWPacker) {
         packer + ArrayHeader(2)
@@ -370,6 +402,19 @@ extension CGPoint: CWPackable {
     init (_ unpacker: CWUnpacker) throws {
         guard try ArrayHeader(unpacker).count == 2 else {throw CWPackError.unpackerError("CGPoint")}
         self = try CGPoint(x: CGFloat(Double(unpacker)), y: CGFloat(Double(unpacker)))
+    }
+}
+
+extension CGSize: CWPackable {
+    func cwPack(_ packer: CWPacker) {
+        packer + ArrayHeader(2)
+        packer + Double(self.width)
+        packer + Double(self.height)
+    }
+
+    init (_ unpacker: CWUnpacker) throws {
+        guard try ArrayHeader(unpacker).count == 2 else {throw CWPackError.unpackerError("CGSize")}
+        self = try CGSize(width: CGFloat(Double(unpacker)), height: CGFloat(Double(unpacker)))
     }
 }
 
@@ -385,6 +430,19 @@ extension CGRect: CWPackable {
     init (_ unpacker: CWUnpacker) throws {
         guard try ArrayHeader(unpacker).count == 4 else {throw CWPackError.unpackerError("CGRect")}
         self = try CGRect(x: CGFloat(Double(unpacker)), y: CGFloat(Double(unpacker)), width: CGFloat(Double(unpacker)), height: CGFloat(Double(unpacker)))
+    }
+}
+
+extension CGVector: CWPackable {
+    func cwPack(_ packer: CWPacker) {
+        packer + ArrayHeader(2)
+        packer + Double(self.dx)
+        packer + Double(self.dy)
+    }
+
+    init (_ unpacker: CWUnpacker) throws {
+        guard try ArrayHeader(unpacker).count == 2 else {throw CWPackError.unpackerError("CGVector")}
+        self = try CGVector(dx: CGFloat(Double(unpacker)), dy: CGFloat(Double(unpacker)))
     }
 }
 

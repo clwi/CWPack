@@ -78,6 +78,10 @@ CWPack has no dependencies to other libraries.
 
 Included in the test folder are a module test and a performance test and shell scripts to run them.
 
+## More Info
+
+More info on CWPack can be found in the document [QUICK-START.md](https://github.com/clwi/CWPack/blob/Develop/QUICK-START.md)
+
 # Objective-C
 
 CWPack also contains an Objective-C interface. The MessagePack home page example would look like:

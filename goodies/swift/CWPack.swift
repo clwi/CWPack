@@ -32,7 +32,7 @@ import Foundation
 
 
 enum CWPackError: Error {
-    case fileError(_ errNo:Int)
+    case fileError(_ errNo:Int32)
     case contextError(_ err:Int32)
     case packerError(_ err:String)
     case unpackerError(_ err:String)
@@ -159,7 +159,17 @@ class CWFileUnpacker: CWUnpacker {
     }
 
     init(from url:URL) throws {
-        fh = try FileHandle(forReadingFrom: url)
+        do {
+            fh = try FileHandle(forReadingFrom: url)
+        } catch {
+            let path = url.path
+            let fd = open(path, O_RDWR)
+            guard fd >= 0 else {
+                print("Open error: \(errno)")
+                throw CWPackError.fileError(errno)
+            }
+            fh = FileHandle(fileDescriptor: fd, closeOnDealloc: false)
+        }
         ownsChannel = true
         super.init(&context.uc)
         init_file_unpack_context(&context, 1024, fh!.fileDescriptor)

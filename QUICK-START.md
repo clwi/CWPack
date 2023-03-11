@@ -115,7 +115,7 @@ The file descriptor should be inited before it is used in the `init_file_unpack_
 
 ### Large Data
 
-The STR/BIN/EXT items may hold a large payload, e.g. the bible or a movie. It's not practical to pack all this as a single operation, keeping all data in memory simultaneously. But it is possible to split the packing operation and first pack the item header and then the payload in portions. Another advantage is that for file_contexts, the data is written direct to the file descriptor and isn't using the context buffer.  Here is a subroutine example that packs a disk file to a pack context.
+The STR/BIN/EXT items may hold a large payload, e.g. the bible or a movie. It's not practical to pack all this as a single operation, keeping all data in memory simultaneously. But it is possible to split the packing operation and first pack the item header and then the payload in portions. Another advantage is that for file_contexts, the payload is written direct to the file descriptor and isn't using the contexts internal buffer.  Here is a subroutine example that packs a disk file to a pack context.
 
 ```c
 void cwpack_disk_file (cw_pack_context* ctx, const char* fileName) {
@@ -184,7 +184,7 @@ These items separates themselves from all other items in that they have variable
 
 ### Large Data
 
-As pointed out above, Str/Bin/Ext items could extend the input buffer quite a lot. The trick to avoid that is to use `cw_unpack_next_descriptor` instead of `cw_unpack_next`. This call behaves exactly the same as `cw_unpack_next` for all other items, but for Str/Bin/Ext items only the type and the length is saved in the context.item, and no effort is spent on getting the payload. The payload can then be obtained with the `cw_unpack_data` call. It's not neccesary to obtain all data in a single call but you can divide it in parts as you do in writing.
+As pointed out above, Str/Bin/Ext items could extend the input buffer quite a lot. The trick to avoid that is to use `cw_unpack_next_descriptor` instead of `cw_unpack_next`. This call behaves exactly like `cw_unpack_next` for all other items, but for Str/Bin/Ext items only the type and the length is saved in the context.item, and no effort is spent on getting the payload. The payload can then be obtained with the `cw_unpack_data` call. It's not neccesary to obtain all data in a single call but you can divide it in parts as you do in writing.
 
 Example is a function that reads a Bin item from a context and saves the payload in a disc file.
 
