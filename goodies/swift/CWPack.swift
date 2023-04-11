@@ -46,14 +46,12 @@ struct CWNil {
 
 struct ArrayHeader {
     let count:Int
-    init (_ count:Int) {self.count = count}
-    init () {count = 0}
+    init (_ count:Int = 0) {self.count = count}
 }
 
 struct DictionaryHeader {
-    let count:UInt32
-    init (_ count:UInt32) {self.count = count}
-    init () {count = 0}
+    let count:Int
+    init (_ count:Int = 0) {self.count = count}
 }
 
 struct MsgPackExt  {
@@ -163,7 +161,7 @@ class CWFileUnpacker: CWUnpacker {
             fh = try FileHandle(forReadingFrom: url)
         } catch {
             let path = url.path
-            let fd = open(path, O_RDWR)
+            let fd = open(path, O_RDONLY)
             guard fd >= 0 else {
                 print("Open error: \(errno)")
                 throw CWPackError.fileError(errno)

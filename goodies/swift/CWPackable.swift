@@ -83,7 +83,7 @@ extension DictionaryHeader: CWPackable {
         cw_pack_map_size(packer.p, UInt32(self.count))}
 
     init (_ unpacker: CWUnpacker) throws {
-        self.count = cw_unpack_next_map_size(unpacker.p)
+        self.count = Int(cw_unpack_next_map_size(unpacker.p))
         guard unpacker.OK else {throw CWPackError.unpackerError("DictionaryHeader")}
     }
 }
@@ -358,7 +358,7 @@ extension ArraySlice: CWPackable where Element: CWPackable {
 
 extension Dictionary: CWPackable where Key: CWPackable , Value: CWPackable {
     func cwPack(_ packer: CWPacker) {
-        packer + DictionaryHeader(UInt32(self.count))
+        packer + DictionaryHeader(self.count)
         if count > 0 {
             for key in self.keys {
                 packer + key + self[key]!
