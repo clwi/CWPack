@@ -106,7 +106,16 @@ class CWFilePacker: CWPacker {
         init_file_pack_context(&context, 1024, descriptor)
     }
 
-    init(to url:URL) throws {
+    init(to url:URL,_ createIfMissing: Bool = true, overwriteWhenExistent: Bool = true) throws {
+        let path = url.path
+        let folder = url.deletingLastPathComponent()
+        if FileManager.default.fileExists(atPath: path) {
+            guard overwriteWhenExistent else {throw CWPackError.packerError("File can't be overwritten")}
+        } else {
+            guard createIfMissing else {throw CWPackError.packerError("File missing")}
+            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true, attributes: nil)
+            FileManager.default.createFile(atPath: path, contents:nil)
+        }
         fh = try FileHandle(forWritingTo: url)
         ownsChannel = true
         super.init(&context.pc)

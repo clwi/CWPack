@@ -41,6 +41,10 @@ protocol CWPackable {
     @discardableResult static func - (lhs: CWUnpacker, rhs: inout Self) throws ->  CWUnpacker
 
     init (_ unpacker: CWUnpacker) throws
+
+    init? (optional unpacker: CWUnpacker) throws
+
+    static func cwPackOptional (_ s: Self?,_ packer: CWPacker)
 }
 
 
@@ -53,6 +57,20 @@ extension CWPackable {
     @discardableResult static func - (lhs: CWUnpacker, rhs: inout Self) throws ->  CWUnpacker {
         rhs = try self.init(lhs)
         return lhs
+    }
+
+    init? (optional unpacker: CWUnpacker) throws {
+        let type = cw_look_ahead(unpacker.p)
+        if type == CWP_ITEM_NIL {
+            cw_skip_items(unpacker.p, 1) // Consume NIL item
+            return nil
+        }
+        try self.init(unpacker)
+    }
+
+    static func cwPackOptional (_ s: Self?,_ packer: CWPacker) {
+        if s == nil     { packer + CWNil() }
+        else            { packer + s! }
     }
 }
 
