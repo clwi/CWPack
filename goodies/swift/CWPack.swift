@@ -41,7 +41,7 @@ enum CWPackError: Error {
 
 // MARK: ------------------------------ MessagePack Objects
 
-struct CWNil {
+struct CWNil {  // Will be deprecated as it is no longer needed.
 }
 
 struct ArrayHeader {
@@ -71,6 +71,14 @@ class CWPacker {
 
     var optimizeReal: Bool = true
     var OK: Bool {p.pointee.return_code == CWP_RC_OK}
+
+    func pack (_ item: (any CWPackPackable)?) {
+        if item == nil  {
+            cw_pack_nil(p)
+        } else {
+            item!.cwPack(self)
+        }
+    }
 
     init(_ p:UnsafeMutablePointer<cw_pack_context>) {
         self.p = p

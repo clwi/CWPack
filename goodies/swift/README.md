@@ -12,20 +12,26 @@ The file packer/unpacker comes in 2 flavours, inited with an URL or with a file 
 
 `CWDataPacker` is layered on top of a `dynamic_memory_pack_context` and `CWFilePacker` is layerd on top of a `file_pack_context`.
 
-To pack an item you call: `item.cwPack(packer)`
+To pack an item you call: `packer.pack(item)`
 
 After packing you can check the result by inspecting the packer property `OK`.
 
-The packers have a property `optimizeReal`. When true, a check is performed to see if real items losslessly could be casted to a shorter representation, e.g. 0.0 is saved as an (1 byte) integer and Double 0.5 is saved as a Float.
+The packers have a property `optimizeReal`. When true (default), a check is performed to see if real items losslessly could be casted to a shorter representation, e.g. 0.0 is saved as an (1 byte) integer and Double 0.5 is saved as a Float.
 
 #### Unpack
 
 `CWDataUnpacker` is layered on top of a `cw_unpack_context` and
 `CWFileUnpacker` is layered on `file_unpack_context`.
 
-To retreive items you call the init(_ unpacker: CWUnpacker) initializer e.g:
-`let i = Int(unpacker)` and
-`let ar: [String] = Array(unpacker)`
+To retreive items you call the `init(_ unpacker: CWUnpacker)` initializer e.g:
+
+- `let i = Int(unpacker)` and
+- `let ar: [String] = Array(unpacker)`
+
+If you are retreiving the value of an optional type, you should use the `init(optional unpacker: CWUnpacker)` initializer e.g:
+
+- `let i: Int? = Int(optional: unpacker)` and
+- `let ar: [String]? = Array(optional: unpacker)`
 
 If the messagepack stream doesn't contain the expected item, an exception is thrown.
 
@@ -35,28 +41,35 @@ Doubles accept both Float and Integer as valid values at unpack.
 
 To simplify packing and unpacking two operators are defined for packers/unpackers. When packing you can write:
 
-`packer + value1 + value2 ...` (think of it as adding values to the packer stream) and when unpacking you can write:
+`packer + value1 + value2 ...` (think of it as adding values to the packer stream)
 
-`unpacker - variable1 - variable2...` 
+When unpacking you can write:
 
-Note however, this has limited usage in inits, as the variables are handled as `inout` parameters and if they are properties, they are considered used before assigned by the compiler.
+`unpacker - variable1 - variable2 ...` 
+
+Note however, this has limited usage in inits, as the variables are handled as `inout` parameters and if they are properties, they are considered used before assigned by the compiler. Another restriction for the `-` operator is that the variables can't be optionals.
 
 ## Packable items
 
-When choosing if the packing should be automatic by inspection or explicit, we have chosen the latter, as it gives better control over the (un)packing, which can be important when communicating with others. For that reason, to be packable, objects need to fulfill the protocol `CWPackable`. 
+When choosing if the packing should be automatic by inspection or explicit, we have chosen the latter, as it gives better control over the (un)packing, which can be important when communicating with others. 
 
-To fulfill the `CWPackable` protocol, an item must implement 2 methods:
+For a type to be packable it should fulfill the protocol `CWPackPackable`. The protocol specifies a mandatory method to be implemented:
 
-- `init(_ unpacker:CWUnpacker) throws` and
 - `cwPack(_ packer:CWPacker)`
 
-The file CWPackable.swift contains CWPackable exstensions of some system types.
+For a type to be unpackable it should fulfill the protocol `CWPackUnpackable`. The protocol specifies a mandatory method to be implemented:
+
+- `init(_ unpacker:CWUnpacker) throws`
+
+The protocol `CWPackable`combines both protocols above and the type can be used for both packing and unpacking. 
+
+The file CWPackable.swift contains the protocol definitions and `CWPackable` exstensions of some system types.
 
 ### MessagePack items
 
 MessagePack has some types that don't have exact match in Swift. To simplify usage they are defined in CWPack.swift. They are:
 
-- `CWNil` to be able to handle nil items.
+- `CWNil` to be able to handle nil items. This will be deprecated as it is no longer needed.
 - `ArrayHeader` and
 - `DictionaryHeader` to be able to pack/unpack structures in an incremental fashion.
 - `MsgPackExt` to handle extension types. However, the standard extension type Timestamp is mapped to Swift type Date.
@@ -70,6 +83,11 @@ The interface is delivered as source files that you include in your project. The
 - CWPack/goodies/utils/cwpack_utils.c
 - CWPack/goodies/swift/CWPack.swift
 - CWPack/goodies/swift/CWPackable.swift
+
+
+If you are using Apple Core Graphic you may also need the file:
+
+- CWPack/goodies/swift/CG+CWPackable.swift
 
 If you use XCode you should place this snippet in the file xxx-Bridging-Header.h
 

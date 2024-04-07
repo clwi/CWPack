@@ -30,30 +30,33 @@
 import Foundation
 
 
-// MARK: ----------------------------------------------- CWPackable protocol
+// MARK: ----------------------------------------------- Protocols
 
 
-protocol CWPackable {
-    @discardableResult static func + (lhs: CWPacker, rhs: Self) ->  CWPacker
-
+protocol CWPackPackable {
+    // Method that must be supplied in type definition
     func cwPack(_ packer: CWPacker)
-
-    @discardableResult static func - (lhs: CWUnpacker, rhs: inout Self) throws ->  CWUnpacker
-
-    init (_ unpacker: CWUnpacker) throws
-
-    init? (optional unpacker: CWUnpacker) throws
-
-    static func cwPackOptional (_ s: Self?,_ packer: CWPacker)
 }
 
+protocol CWPackUnpackable {
+    // Method that must be supplied in type definition
+    init (_ unpacker: CWUnpacker) throws
+    // Methods that are supplied in protocol extension
+    @discardableResult static func - (lhs: CWUnpacker, rhs: inout Self) throws ->  CWUnpacker
+    init? (optional unpacker: CWUnpacker) throws
+}
 
-extension CWPackable {
-    @discardableResult static func + (lhs: CWPacker, rhs: Self) ->  CWPacker {
-        rhs.cwPack(lhs)
+protocol CWPackable: CWPackPackable, CWPackUnpackable {}
+
+
+extension CWPacker {
+    @discardableResult static func + (lhs: CWPacker, rhs: (any CWPackPackable)?) ->  CWPacker {
+        lhs.pack(rhs)
         return lhs
     }
+}
 
+extension CWPackUnpackable {
     @discardableResult static func - (lhs: CWUnpacker, rhs: inout Self) throws ->  CWUnpacker {
         rhs = try self.init(lhs)
         return lhs
@@ -62,17 +65,13 @@ extension CWPackable {
     init? (optional unpacker: CWUnpacker) throws {
         let type = cw_look_ahead(unpacker.p)
         if type == CWP_ITEM_NIL {
-            cw_skip_items(unpacker.p, 1) // Consume NIL item
+            cw_skip_items(unpacker.p, 1)    // Consume NIL item
             return nil
         }
         try self.init(unpacker)
     }
-
-    static func cwPackOptional (_ s: Self?,_ packer: CWPacker) {
-        if s == nil     { packer + CWNil() }
-        else            { packer + s! }
-    }
 }
+
 
 // MARK: ----------------------------------------------- MessagePack type extensions
 
@@ -308,7 +307,7 @@ extension String: CWPackable {
     }
 }
 
-extension Set: CWPackable where Element: CWPackable {
+extension Set: CWPackPackable where Element: CWPackPackable {
     func cwPack(_ packer: CWPacker) {
         packer + ArrayHeader(self.count)
         if count > 0 {
@@ -318,6 +317,9 @@ extension Set: CWPackable where Element: CWPackable {
         }
     }
 
+}
+
+extension Set: CWPackUnpackable where Element: CWPackUnpackable {
     init (_ unpacker: CWUnpacker) throws {
         let ah = try ArrayHeader(unpacker)
         self.init()
@@ -330,7 +332,7 @@ extension Set: CWPackable where Element: CWPackable {
     }
 }
 
-extension Array: CWPackable where Element: CWPackable {
+extension Array: CWPackPackable where Element: CWPackPackable {
     func cwPack(_ packer: CWPacker) {
         packer + ArrayHeader(self.count)
         if count > 0 {
@@ -339,7 +341,9 @@ extension Array: CWPackable where Element: CWPackable {
             }
         }
     }
+}
 
+extension Array: CWPackUnpackable where Element: CWPackUnpackable {
     init (_ unpacker: CWUnpacker) throws {
         let ah = try ArrayHeader(unpacker)
         self.init()
@@ -352,7 +356,7 @@ extension Array: CWPackable where Element: CWPackable {
     }
 }
 
-extension ArraySlice: CWPackable where Element: CWPackable {
+extension ArraySlice: CWPackPackable where Element: CWPackPackable {
     func cwPack(_ packer: CWPacker) {
         packer + ArrayHeader(self.count)
         if count > 0 {
@@ -361,7 +365,9 @@ extension ArraySlice: CWPackable where Element: CWPackable {
             }
         }
     }
+}
 
+extension ArraySlice: CWPackUnpackable where Element: CWPackUnpackable {
     init (_ unpacker: CWUnpacker) throws {
         let ah = try ArrayHeader(unpacker)
         self.init()
@@ -374,7 +380,7 @@ extension ArraySlice: CWPackable where Element: CWPackable {
     }
 }
 
-extension Dictionary: CWPackable where Key: CWPackable , Value: CWPackable {
+extension Dictionary: CWPackPackable where Key: CWPackPackable , Value: CWPackPackable {
     func cwPack(_ packer: CWPacker) {
         packer + DictionaryHeader(self.count)
         if count > 0 {
@@ -384,6 +390,9 @@ extension Dictionary: CWPackable where Key: CWPackable , Value: CWPackable {
         }
     }
 
+}
+
+extension Dictionary: CWPackUnpackable where Key: CWPackUnpackable , Value: CWPackUnpackable {
     init (_ unpacker: CWUnpacker) throws {
         let ah = try DictionaryHeader(unpacker)
         self.init()
@@ -396,4 +405,3 @@ extension Dictionary: CWPackable where Key: CWPackable , Value: CWPackable {
         }
     }
 }
-
