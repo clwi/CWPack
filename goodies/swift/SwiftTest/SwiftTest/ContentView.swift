@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State var cnt: Int
+    @Binding var cnt: Int
     var body: some View {
         VStack {
             Image(systemName: "globe")
@@ -29,5 +29,5 @@ struct ContentView: View {
 }
 
 #Preview {
-    ContentView(cnt:1)
+    ContentView(cnt:.constant(1))
 }

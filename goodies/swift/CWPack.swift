@@ -103,36 +103,35 @@ class CWDataPacker: CWPacker {
 class CWFilePacker: CWPacker {
     private var context = file_pack_context()
     private let ownsChannel: Bool
-    let fh: FileHandle?
+    private let fd: Int32
 
     func flush() {cw_pack_flush(&context.pc)}
 
     init(to descriptor:Int32) {
         ownsChannel = false
-        fh = nil
+        fd = -1
         super.init(&context.pc)
         init_file_pack_context(&context, 1024, descriptor)
     }
 
-    init(to url:URL,_ createIfMissing: Bool = true, overwriteWhenExistent: Bool = true) throws {
-        let path = url.path
-        let folder = url.deletingLastPathComponent()
-        if FileManager.default.fileExists(atPath: path) {
-            guard overwriteWhenExistent else {throw CWPackError.packerError("File can't be overwritten")}
-        } else {
-            guard createIfMissing else {throw CWPackError.packerError("File missing")}
-            try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true, attributes: nil)
-            FileManager.default.createFile(atPath: path, contents:nil)
-        }
-        fh = try FileHandle(forWritingTo: url)
+    init(to path: String) throws {
         ownsChannel = true
+        fd = open(path, O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH )
+        guard fd >= 0 else {
+            print("Open error: \(errno)")
+            throw CWPackError.fileError(errno)
+        }
         super.init(&context.pc)
-        init_file_pack_context(&context, 1024, fh!.fileDescriptor)
+        init_file_pack_context(&context, 1024, fd)
+    }
+
+    convenience init(to url:URL) throws {
+        try self.init(to: url.path)
     }
 
     deinit {
         terminate_file_pack_context(&context)
-//        if ownsChannel {close(context.fileDescriptor)}
+        if ownsChannel && fd >= 0 {close(fd)}
     }
 }
 
@@ -164,34 +163,32 @@ class CWDataUnpacker: CWUnpacker {
 class CWFileUnpacker: CWUnpacker {
     private var context = file_unpack_context()
     private let ownsChannel: Bool
-    let fh: FileHandle?
+    let fd: Int32
 
     init(from descriptor:Int32) {
         ownsChannel = false
-        fh = nil
+        fd = -1
         super.init(&context.uc)
         init_file_unpack_context(&context, 1024, descriptor)
     }
 
-    init(from url:URL) throws {
-        do {
-            fh = try FileHandle(forReadingFrom: url)
-        } catch {
-            let path = url.path
-            let fd = open(path, O_RDONLY)
-            guard fd >= 0 else {
-                print("Open error: \(errno)")
-                throw CWPackError.fileError(errno)
-            }
-            fh = FileHandle(fileDescriptor: fd, closeOnDealloc: false)
-        }
+    init(from path: String) throws {
         ownsChannel = true
+        fd = open(path, O_RDONLY)
+        guard fd >= 0 else {
+            print("Open error: \(errno)")
+            throw CWPackError.fileError(errno)
+        }
         super.init(&context.uc)
-        init_file_unpack_context(&context, 1024, fh!.fileDescriptor)
+        init_file_unpack_context(&context, 1024, fd)
+    }
+
+    convenience init(from url:URL) throws {
+        try self.init(from: url.path)
     }
 
     deinit {
         terminate_file_unpack_context(&context)
-//        if ownsChannel {close(context.fileDescriptor)}
+        if ownsChannel && fd >= 0 {close(fd)}
     }
 }
