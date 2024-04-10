@@ -72,6 +72,70 @@ extension CWPackUnpackable {
     }
 }
 
+// MARK: ----------------------------------------------- Protocols for enums with rawValue
+
+protocol CWPackableInt: CWPackable {
+    init?(rawValue: Int)
+    var rawValue: Int {get}
+}
+
+extension CWPackableInt {
+    init (_ unpacker: CWUnpacker) throws {
+        try self.init(rawValue: Int(unpacker))!
+    }
+
+    func cwPack(_ packer: CWPacker) {
+        packer + self.rawValue
+    }
+}
+
+
+protocol CWPackableDouble: CWPackable {
+    init?(rawValue: Double)
+    var rawValue: Double {get}
+}
+
+extension CWPackableDouble {
+    init (_ unpacker: CWUnpacker) throws {
+        try self.init(rawValue: Double(unpacker))!
+    }
+
+    func cwPack(_ packer: CWPacker) {
+        packer + self.rawValue
+    }
+}
+
+
+protocol CWPackableString: CWPackable {
+    init?(rawValue: String)
+    var rawValue: String {get}
+}
+
+extension CWPackableString {
+    init (_ unpacker: CWUnpacker) throws {
+        try self.init(rawValue: String(unpacker))!
+    }
+
+    func cwPack(_ packer: CWPacker) {
+        packer + self.rawValue
+    }
+}
+
+protocol CWPackableChar: CWPackable {
+    init?(rawValue: Character)
+    var rawValue: Character {get}
+}
+
+extension CWPackableChar {
+    init (_ unpacker: CWUnpacker) throws {
+        try self.init(rawValue: Character(Unicode.Scalar(UInt32(unpacker))!))!
+    }
+
+    func cwPack(_ packer: CWPacker) {
+        packer + self.rawValue.unicodeScalars.first!.value
+    }
+}
+
 
 // MARK: ----------------------------------------------- MessagePack type extensions
 
@@ -282,6 +346,17 @@ extension Data: CWPackable {
         guard unpacker.OK else {throw CWPackError.unpackerError("Data")}
         if l > 0 {self.init(bytes: unpacker.p.pointee.item.as.bin.start, count: Int(l))}
         else {self.init()}
+    }
+}
+
+extension Character: CWPackable {
+    func cwPack(_ packer: CWPacker) {
+        cw_pack_unsigned(packer.p, UInt64(self.unicodeScalars.first!.value))}
+
+    init (_ unpacker: CWUnpacker) throws {
+        let u32 = cw_unpack_next_unsigned32(unpacker.p)
+        guard unpacker.OK else {throw CWPackError.unpackerError("Character")}
+        self.init(Unicode.Scalar(u32)!)
     }
 }
 

@@ -18,14 +18,15 @@ struct SwiftTestApp: App {
         }
     }
 
-    func err(_ msg: String) {
-        cnt = cnt + 1
-        print( "Error: " + msg + "\n")
-    }
-
     init() {
-        cnt = 0
+        var icnt = 0
+        func err(_ msg: String) {
+            icnt += 1
+            print( "Error: " + msg + "\n")
+        }
+
         do {
+            // som file and nil tests
             do {
                 let packer = try CWFilePacker(to:"SwiftTest2")
                 let im3 = -3
@@ -34,12 +35,7 @@ struct SwiftTestApp: App {
                 packer + "Hello" + "World"
                 packer + CWNil() + cs + nil
                 if !packer.OK {err("In packer")}
-            } catch {
-                err( "Pack: \(error)" )
-                throw error
             }
-
-            do {
                 let unpacker = try CWFileUnpacker(from: "SwiftTest2")
 
                 let b:Bool = try Bool(unpacker)
@@ -71,11 +67,46 @@ struct SwiftTestApp: App {
                 if !unpacker.OK {err("!unpacker.OK")}
                 else {print("Test passed \n")}
 
-            } catch {
-                err( "Unpack: \(error)" )
-                throw error
+            // enum tests
+
+            enum EInt: Int, CWPackableInt {              // Packed as a MessagePack Integer
+                case first = 50
+                case second = 3
             }
+
+            enum EDouble: Double, CWPackableDouble {     // Packed as a MessagePack Float
+                case pi = 3.14
+                case e = 2.73
+            }
+
+            enum ECharacter: Character, CWPackableChar{  // Packed as a MessagePack Unsigned Integer
+                case space = " "
+                case newLine = "\n"
+            }
+
+            enum EString: String, CWPackableString {     // Packed as a MessagePack String
+                case alpha
+                case omega
+            }
+
+            let eInt = EInt.second
+            let dp = CWDataPacker()
+            dp + eInt + EDouble.pi + ECharacter.newLine + EString.alpha + 50 + 2.73 + 0x20 + "omega"
+
+            let du = CWDataUnpacker(from: dp.data)
+            try print("\(Int(du))")         // 3
+            try print("\(Double(du))")      // 3.14
+            try print("\(UInt(du))")        // 10
+            try print("\(String(du))")      // alpha
+            try print("\(EInt(du))")        // first
+            try print("\(EDouble(du))")     // e
+            try print("\(ECharacter(du))")  // space
+            try print("\(EString(du))")     // omega
+
         } catch {
+            print("\(error)")
+            icnt += 10000
         }
+        cnt = icnt
     }
 }

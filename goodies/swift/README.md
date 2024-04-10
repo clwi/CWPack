@@ -6,7 +6,7 @@ This folder contains a pack and an unpack context and a packable protocol to ena
 
 The swift interface contains 4 contexts `CWDataPacker`, `CWFilePacker`, `CWDataUnpacker` and `CWFileUnpacker`. All are layered on the corresponding c structures accessable though the property `p`.
 
-The file packer/unpacker comes in 2 flavours, inited with an URL or with a file descriptor.
+The file packer/unpacker comes in 2 flavours, inited with a path or with a file descriptor.
 
 #### Pack
 
@@ -37,7 +37,7 @@ If the messagepack stream doesn't contain the expected item, an exception is thr
 
 Doubles accept both Float and Integer as valid values at unpack.
 
-## Conveniance operators '+' and '-'
+## Convenience operators '+' and '-'
 
 To simplify packing and unpacking two operators are defined for packers/unpackers. When packing you can write:
 
@@ -67,12 +67,38 @@ The file CWPackable.swift contains the protocol definitions and `CWPackable` exs
 
 ### MessagePack items
 
-MessagePack has some types that don't have exact match in Swift. To simplify usage they are defined in CWPack.swift. They are:
+MessagePack has some types that don't have exact match in Swift. To simplify usage they are defined in CWPack.swift together with their CWPackable implementation. They are:
 
 - `CWNil` to be able to handle nil items. This will be deprecated as it is no longer needed.
 - `ArrayHeader` and
 - `DictionaryHeader` to be able to pack/unpack structures in an incremental fashion.
 - `MsgPackExt` to handle extension types. However, the standard extension type Timestamp is mapped to Swift type Date.
+
+### Enums with rawValue
+
+The file CWPackable.swift contains protocols for enums with a rawValue type of Int, Double, Character and String. The protocol extensions contain a complete implementationof the CWPackable protocol so no more code is needed. E.g.:
+
+```
+enum EInt: Int, CWPackableInt {              // Packed as a MessagePack Integer
+    case first = 50
+    case second = 3
+}
+
+enum EDouble: Double, CWPackableDouble {     // Packed as a MessagePack Float
+    case pi = 3.14
+    case e = 2.73
+}
+
+enum ECharacter: Character, CWPackableChar{  // Packed as a MessagePack Unsigned Integer
+    case space = " "
+    case newLine = "\n"
+}
+
+enum EString: String, CWPackableString {     // Packed as a MessagePack String
+    case alpha
+    case omega
+}
+```
  
 ## Installation
  
