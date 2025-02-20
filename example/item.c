@@ -30,7 +30,6 @@
 #include "basic_contexts.h"
 
 
-
 void freeItem3 (item_root* root)
 {
     int i;
@@ -38,6 +37,7 @@ void freeItem3 (item_root* root)
     switch (root->item_type)
     {
         case ITEM_MAP:
+        case ITEM_EXT:
         case ITEM_ARRAY:
             ic = (item_container*)root;
             for (i=0; i < ic->count; i++)
@@ -50,18 +50,29 @@ void freeItem3 (item_root* root)
     }
 }
 
+static char X2C(char x) {
+    if (x < 10) return x + '0';
+    else        return x - 10 + 'A';
+}
+
+static char C2X(char x) {
+    if (x < 'A') return x - '0';
+    else         return x + 10 - 'A';
+}
+
 /**********************************  ITEM-TREE  to  JSON FILE  *********************/
 
 
 static void item32jsonFile (FILE* file, item_root* item)
 {
     char        tmp[30];
-    int    i,j = 0;
+    int    i,j = 0, length;
     item_container* jc;
     char* cp;
     char c;
     unsigned u, ti;
     static unsigned tabs = 0;
+    item_blob* bp;
 
 #define NEW_LINE {fprintf (file, "\n"); for (ti=0; ti<tabs; ti++) fprintf (file, "\t");}
 
@@ -99,6 +110,15 @@ static void item32jsonFile (FILE* file, item_root* item)
             fprintf(file, "]");
             break;
 
+        case ITEM_EXT:
+            jc = (item_container*)item;
+            fprintf (file, "[/");
+            item32jsonFile (file, jc->items[0]);
+            fprintf (file, ",");
+            item32jsonFile (file, jc->items[1]);
+            fprintf(file, "/]");
+            break;
+
         case ITEM_NIL:
             fprintf (file, "null");
             break;
@@ -130,11 +150,24 @@ static void item32jsonFile (FILE* file, item_root* item)
             fprintf (file, "%s", tmp);
             break;
 
+        case ITEM_BIN:
+            fprintf (file, "'");
+            bp = (item_blob*)item;
+            length = bp->length;
+            for (i=0;i<length;i++) {
+                unsigned char t = bp->string[i];
+                fprintf (file, "%c%c", X2C(t/16), X2C(t%16));
+            }
+            fprintf (file, "'");
+            break;
+
         case ITEM_STRING:
             fprintf (file, "\"");
-            cp = ((item_string*)item)->string;
-            while ((c = *cp++))
-            {
+            bp = (item_blob*)item;
+            length = bp->length;
+            cp = ((item_blob*)item)->string;
+            for (i=0;i<length;i++) {
+                c = bp->string[i];
                 if (c & 0x80) { /* unicode, codepoint at most 16 bits */
                     if (c & 0x20)
                     {
@@ -237,9 +270,40 @@ static item_container* pullArray (const char** ptr, int count)
     return result;
 }
 
-static item_string* pullString (const char** ptr, int length)
+static item_container* pullExt (const char** ptr)
 {
-    item_string* result;
+    item_container* result = allocate_container (ITEM_EXT, 2);
+//    result->items[0] = jsonString2item3 (ptr);
+//    scanSpace;
+//    char c = *(*ptr)++;
+//    result->items[1] = jsonString2item3 (ptr);
+//    scanSpace;
+//    c = *(*ptr)++;
+//    c = *(*ptr)++;
+    return result;
+}
+
+static item_blob* pullBin (const char** ptr, int length)
+{
+    item_blob* result;
+    char c = *(*ptr)++;
+    if (c != '\'')
+    {
+        char d = C2X(c) * 16 + C2X(*(*ptr)++);
+        result = pullBin (ptr, length + 1);
+        result->string[length] = d;
+    }
+    else
+    {
+        result = allocate_item(item_blob,ITEM_BIN,length);
+        result->length = length;
+    }
+    return result;
+}
+
+static item_blob* pullString (const char** ptr, int length)
+{
+    item_blob* result;
     char c = *(*ptr)++;
     if (c != '"')
     {
@@ -289,8 +353,8 @@ static item_string* pullString (const char** ptr, int length)
     }
     else
     {
-        result = allocate_item(item_string,ITEM_STRING,length + 1);
-        result->string[length] = 0;
+        result = allocate_item(item_blob,ITEM_STRING,length);
+        result->length = length;
     }
     return result;
 }
@@ -311,14 +375,21 @@ static item_root* jsonString2item3 (const char** ptr)
             break;
 
         case '[':
-            scanSpace;
-            if (**ptr == ']')
-                result = (item_root*)allocate_container (ITEM_ARRAY, 0);
-            else
-                result = (item_root*)pullArray (ptr, 0);
+            if (**ptr == '/') {
+                result = (item_root*)pullExt (ptr);
+            } else {
+                scanSpace;
+                if (**ptr == ']')
+                {
+                    result = (item_root*)allocate_container (ITEM_ARRAY, 0);
+                    (*ptr)++;
+                } else
+                    result = (item_root*)pullArray (ptr, 0);
+            }
             break;
 
         case '"':   result = (item_root*)pullString (ptr, 0);break;
+        case '\'':  result = (item_root*)pullBin (ptr, 0);break;
         case 'n':   result = allocate_item(item_root,ITEM_NIL,0); *ptr+=3;break;
         case 't':   result = allocate_item(item_root,ITEM_TRUE,0); *ptr+=3;break;
         case 'f':   result = allocate_item(item_root,ITEM_FALSE,0); *ptr+=4;break;
@@ -386,7 +457,6 @@ static void item32packContext(cw_pack_context* pc, item_root* item)
 {
     int    i;
     item_container* ic;
-    char* cp;
 
     switch (item->item_type)
     {
@@ -425,8 +495,11 @@ static void item32packContext(cw_pack_context* pc, item_root* item)
             break;
 
         case ITEM_STRING:
-            cp = ((item_string*)item)->string;
-            cw_pack_str(pc, cp, (unsigned)strlen(cp));
+            cw_pack_str(pc, ((item_blob*)item)->string, ((item_blob*)item)->length);
+            break;
+
+        case ITEM_BIN:
+            cw_pack_bin(pc, ((item_blob*)item)->string, ((item_blob*)item)->length);
             break;
 
         default:    break;
@@ -446,7 +519,7 @@ void item32cwpackFile (FILE* file, item_root* item)
 
 static item_root* packContext2item3 (cw_unpack_context* uc)
 {
-    int i,dim;
+    int i, dim, length;
     item_root* result;
     cw_unpack_next(uc);
     if (uc->return_code)
@@ -486,9 +559,17 @@ static item_root* packContext2item3 (cw_unpack_context* uc)
             break;
 
         case CWP_ITEM_STR:
-            result = (item_root*)allocate_item(item_string,ITEM_STRING,uc->item.as.str.length + 1);
-            strncpy(((item_string*)result)->string, (const char*)uc->item.as.str.start, uc->item.as.str.length);
-            ((item_string*)result)->string[uc->item.as.str.length] = 0;
+            length = uc->item.as.str.length;
+            result = (item_root*)allocate_item(item_blob,ITEM_STRING,length);
+            ((item_blob*)result)->length = length;
+            strncpy(((item_blob*)result)->string, (const char*)uc->item.as.str.start, length);
+            break;
+
+        case CWP_ITEM_BIN:
+            length = uc->item.as.bin.length;
+            result = (item_root*)allocate_item(item_blob,ITEM_BIN,length);
+            ((item_blob*)result)->length = length;
+            memcpy(((item_blob*)result)->string, (const char*)uc->item.as.bin.start, length);
             break;
 
         case CWP_ITEM_MAP:
@@ -511,6 +592,21 @@ static item_root* packContext2item3 (cw_unpack_context* uc)
             result = (item_root*)ic;
             break;
 
+//        case CWP_ITEM_EXT:
+//            dim = uc->item.as.ext.length;
+//            item_integer* xType = allocate_item(item_integer,ITEM_INTEGER,0);
+//            xType->value = uc->item.type;
+//
+//            item_bin* xBin = allocate_item(item_bin,ITEM_BIN,dim);
+//            xBin->length = dim;
+//            strncpy(xBin->string, (const char*)uc->item.as.ext.start, dim);
+//
+//            ic = allocate_container(ITEM_EXT, 2);
+//            ic->items[0] = (item_root*)xType;
+//            ic->items[1] = (item_root*)xBin;
+//            result = (item_root*)ic;
+//            break;
+
         default:
             result = NULL;
             break;
@@ -527,5 +623,66 @@ item_root* cwpackFile2item3 (FILE* file)
     return result;
 }
 
+static char* item_type_strings[] = {"ITEM_MAP",
+    "ITEM_ARRAY",
+    "ITEM_NIL",
+    "ITEM_TRUE",
+    "ITEM_FALSE",
+    "ITEM_INTEGER",
+    "ITEM_REAL",
+    "ITEM_STRING",
+    "ITEM_BIN",
+    "ITEM_EXT"};
 
 
+static void dumpItem(item_root* item, int indent) {
+    int i;
+    item_container* ic;
+    item_integer* ii;
+    item_real* ir;
+    item_blob* ib;
+
+    for (i=0; i<indent; i++) {
+        printf(" ");
+    }
+    printf("%s",item_type_strings[item->item_type]);
+    switch (item->item_type) {
+        case ITEM_MAP:
+            ic = (item_container*)item;
+            printf(" count: %d\n", ic->count / 2);
+            for (i= 0; i<ic->count; i++) {
+                dumpItem(ic->items[i], indent +2);
+            }
+            break;
+        case ITEM_ARRAY:
+            ic = (item_container*)item;
+            printf(" count: %d\n", ic->count);
+            for (i= 0; i<ic->count; i++) {
+                dumpItem(ic->items[i], indent +2);
+            }
+            break;
+        case ITEM_INTEGER:
+            ii = (item_integer*)item;
+            printf(" value: %d\n", ii->value);
+            break;
+        case ITEM_REAL:
+            ir = (item_real*)item;
+            printf(" value: %f\n", ir->value);
+            break;
+        case ITEM_STRING:
+            ib = (item_blob*)item;
+            printf(" value: \"%*s\"\n", ib->length, ib->string);
+            break;
+        case ITEM_BIN:
+            ib = (item_blob*)item;
+            printf(" length: %d\n", ib->length);
+            break;
+
+        default:
+            printf("\n");
+    }
+}
+
+void dumpTree(item_root* root) {
+    dumpItem(root,0);
+}

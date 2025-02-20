@@ -37,11 +37,13 @@
         ITEM_FALSE,
         ITEM_INTEGER,
         ITEM_REAL,
-        ITEM_STRING
+        ITEM_STRING,
+        ITEM_BIN,
+        ITEM_EXT
     } item_types;
 
     typedef struct {
-        item_types     item_type;
+        item_types     item_type;   // ITEM_NIL, ITEM_TRUE, ITEM_FALSE or subtype
     } item_root;
 
     typedef struct {
@@ -61,12 +63,16 @@
     } item_real;
 
     typedef struct {
-        item_types     item_type;
+        item_types     item_type;       // ITEM_STRING or ITEM_BIN
+        int            length;
         char           string[];
-    } item_string;
+    } item_blob;
 
 
     void freeItem3 (item_root* root);
+
+    void dumpTree(item_root* root);
+
 
 
 

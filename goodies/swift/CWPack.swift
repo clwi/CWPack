@@ -41,8 +41,7 @@ enum CWPackError: Error {
 
 // MARK: ------------------------------ MessagePack Objects
 
-struct CWNil {  // Will be deprecated as it is no longer needed.
-}
+struct CWNil {}
 
 struct ArrayHeader {
     let count:Int
@@ -118,7 +117,7 @@ class CWFilePacker: CWPacker {
         ownsChannel = true
         fd = open(path, O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH )
         guard fd >= 0 else {
-            print("Open error: \(errno)")
+            print("Open write error: \(errno)\n")
             throw CWPackError.fileError(errno)
         }
         super.init(&context.pc)
@@ -141,6 +140,8 @@ class CWFilePacker: CWPacker {
 class CWUnpacker {
     let p: UnsafeMutablePointer<cw_unpack_context>
     var OK: Bool {p.pointee.return_code == CWP_RC_OK}
+    var nextItemType: cwpack_item_types {return cw_look_ahead(p)}
+    func skipItems(_ count: Int) {cw_skip_items(p,count)}
 
     init(_ p:UnsafeMutablePointer<cw_unpack_context>) {
         self.p = p
@@ -176,7 +177,7 @@ class CWFileUnpacker: CWUnpacker {
         ownsChannel = true
         fd = open(path, O_RDONLY)
         guard fd >= 0 else {
-            print("Open error: \(errno)")
+            print("Open read error: \(errno)\n")
             throw CWPackError.fileError(errno)
         }
         super.init(&context.uc)

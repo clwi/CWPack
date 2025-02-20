@@ -69,7 +69,7 @@ The file CWPackable.swift contains the protocol definitions and `CWPackable` exs
 
 MessagePack has some types that don't have exact match in Swift. To simplify usage they are defined in CWPack.swift together with their CWPackable implementation. They are:
 
-- `CWNil` to be able to handle nil items. This will be deprecated as it is no longer needed.
+- `CWNil` to be able to handle nil items.
 - `ArrayHeader` and
 - `DictionaryHeader` to be able to pack/unpack structures in an incremental fashion.
 - `MsgPackExt` to handle extension types. However, the standard extension type Timestamp is mapped to Swift type Date.

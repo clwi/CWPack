@@ -36,32 +36,36 @@ int main(int argc, const char * argv[])
         return 1;
     }
     char filename[200];
-    strcpy(filename, argv[1]);
+//    strcpy(filename, argv[1]);
+    strcpy(filename, "/Users/clwi/Documents/ PK Patterns/Partial Stitch Example");
 
     FILE* jsonFileIn;
     FILE* jsonFileOut;
     FILE* cwpackFileIn;
     FILE* cwpackFileOut;
+    item_root* root;
 
+//    strcat (filename, ".json");
     jsonFileIn = fopen (filename, "r");
-    item_root* root = jsonFile2item3 (jsonFileIn);
+    root = jsonFile2item3 (jsonFileIn);
     fclose(jsonFileIn);
+    dumpTree(root);
 
-    strcat (filename, ".msgpack");
+    strcat (filename, ".pktfer");
     cwpackFileOut = fopen (filename, "w");
     item32cwpackFile (cwpackFileOut, root);
     fclose(cwpackFileOut);
     freeItem3(root);
 
-    cwpackFileIn = fopen (filename, "r");
-    root = cwpackFile2item3 (cwpackFileIn);
-    fclose(cwpackFileIn);
-
-    strcat (filename, ".json");
-    jsonFileOut = fopen (filename, "w");
-    item32JsonFile (jsonFileOut, root);
-    fclose(jsonFileOut);
-    freeItem3(root);
+//    cwpackFileIn = fopen (filename, "r");
+//    root = cwpackFile2item3 (cwpackFileIn);
+//    fclose(cwpackFileIn);
+//
+//    strcat (filename, ".json");
+//    jsonFileOut = fopen (filename, "w");
+//    item32JsonFile (jsonFileOut, root);
+//    fclose(jsonFileOut);
+//    freeItem3(root);
 
     return 0;
 }
